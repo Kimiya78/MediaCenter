@@ -2,6 +2,7 @@ import "@/app/globals.css"
 import "@/styles/responsive.css"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
+/*import {CookieManager} from "@/scr/CookieManager.js"*/
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -26,7 +27,6 @@ export default function RootLayout({
     </html>
   )
 }
-
 
 
 import './globals.css'

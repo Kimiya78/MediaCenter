@@ -50,21 +50,49 @@ export function UploadDialog({ isOpen, onClose, onUpload, destination }: UploadD
   }
 
   const handleSubmit = async () => {
-    if (selectedFile && description) {
-      setUploading(true)
-      // Simulate upload progress
-      for (let i = 0; i <= 100; i += 10) {
-        setProgress(i)
-        await new Promise((resolve) => setTimeout(resolve, 200))
-      }
-      onUpload(selectedFile, description)
-      setSelectedFile(null)
-      setDescription("")
-      setUploading(false)
-      setProgress(0)
-      onClose()
+    debugger
+    if (!selectedFile) {
+      alert("Please select a file to upload.");
+      return;
     }
-  }
+  
+    const formData = new FormData();
+    formData.append("EntityGUID", "0xBD4A81E6A803"); // Replace with actual GUID if applicable
+    formData.append("EntityDataGUID", "0x85AC4B90382C"); // Replace if applicable
+    formData.append("ServiceCategoryID", ""); // Change if necessary
+    formData.append("ItemID", ""); // Change if necessary
+    formData.append("Description", description || ""); // Ensure description is not null
+    formData.append("ParentfolderId", "6"); // Ensure parentFolderId is not null
+    formData.append("file", selectedFile);
+  
+    setUploading(true); // Set uploading to true before starting the request
+    try {
+      const response = await fetch("https://cgl1106.cinnagen.com:9020/create", {
+        method: "POST",
+        body: formData,
+   /*     headers: {
+          'Content-Type': 'application/json',
+        },*/
+      });
+  
+      if (response.ok) {
+        const data = await response.json();
+        alert("File uploaded successfully!");
+        console.log(data);
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.detail || "Something went wrong!"}`);
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      alert("Error uploading file.");
+    } finally {
+      setUploading(false); // Reset uploading state
+      setProgress(0); // Reset progress after upload is done
+      onClose(); // Close the dialog after upload
+    }
+  };
+  
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

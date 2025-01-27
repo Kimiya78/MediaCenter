@@ -1,32 +1,29 @@
-"use client"
+"use client";  // Mark this file as a client-side component
 
-import * as React from "react"
-import { Languages } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import React, { useState, useEffect } from "react";
 
 export function DirectionToggle() {
-  const [dir, setDir] = React.useState<"ltr" | "rtl">(() => document.documentElement.dir || "ltr")
+  const [dir, setDir] = useState<"ltr" | "rtl">("ltr");
+
+  useEffect(() => {
+    // Ensure code only runs in the browser
+    if (typeof document !== "undefined") {
+      setDir(document.documentElement.dir || "ltr");
+    }
+  }, []); // Runs once after the component mounts
 
   const toggleDirection = React.useCallback(() => {
-    const newDir = dir === "ltr" ? "rtl" : "ltr"
-    setDir(newDir)
-    document.documentElement.dir = newDir
-    // Force layout recalculation
-    document.body.style.display = "none"
-    document.body.offsetHeight // Force reflow
-    document.body.style.display = ""
-  }, [dir])
+    const newDir = dir === "ltr" ? "rtl" : "ltr";
+    setDir(newDir);
+    // Update the document's direction when toggled
+    if (typeof document !== "undefined") {
+      document.documentElement.dir = newDir;
+    }
+  }, [dir]);
 
   return (
-    <Button
-      variant="outline"
-      size="icon"
-      onClick={toggleDirection}
-      className="bg-background rtl:rotate-180 transition-transform duration-200"
-    >
-      <Languages className="h-[1.2rem] w-[1.2rem]" />
-      <span className="sr-only">Toggle direction</span>
-    </Button>
-  )
+    <button onClick={toggleDirection}>
+      Switch to {dir === "ltr" ? "Right-to-Left" : "Left-to-Right"}
+    </button>
+  );
 }
-

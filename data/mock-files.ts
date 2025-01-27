@@ -154,5 +154,16 @@ export const MOCK_FILES: FileItem[] = [
     permission: "viewer",
     isLocked: false,
   },
+
+  {
+    id: "16",
+    name: "Movie.mp4",
+    type: "mp4",
+    size: 20.60,
+    createdBy: "alex Johnson",
+    createdDate: "2025-01-0`",
+    permission: "cooperative",
+    isLocked: true,
+  },
 ]
 
