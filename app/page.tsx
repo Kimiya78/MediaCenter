@@ -1,10 +1,65 @@
-import { Sidebar } from "@/components/layout/sidebar"
-import { FileGrid } from "@/components/file-manager/file-grid"
-import { MOCK_FILES } from "@/data/mock-files"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { DirectionToggle } from "@/components/direction-toggle"
+"use client"; // اضافه کردن این خط در ابتدای فایل
+
+import { useEffect, useState } from "react";
+import { Sidebar } from "@/components/layout/sidebar";
+import { FileGrid } from "@/components/file-manager/file-grid";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { DirectionToggle } from "@/components/direction-toggle";
+import type { FileItem } from "@/types/file";
 
 export default function Page() {
+  const [files, setFiles] = useState<FileItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(
+          "https://cgl1106.cinnagen.com:9020/fetch_media?page_number=1&page_size=8&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=6"
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data. Status: ${response.status}`);
+        }
+
+        const apiData = await response.json();
+        const transformedData: FileItem[] = apiData.items.map((item: any) => ({
+          id: item.FileGUID,
+          name: item.FileName,
+          type: item.FileExtension,
+          size: item.FileSize / 1024, // Convert bytes to KB
+          createdBy: item.CreatedBy,
+          createdDate: item.CreatedDateTime.split(" ")[0],
+          description: item.Description,
+          permission: item.allowDeleteFile === "true" ? "owner" : "viewer",
+          isLocked: false,
+        }));
+
+        setFiles(transformedData);
+      } catch (error) {
+        setError("Error fetching data. Please try again.");
+        console.error("Fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen text-red-500">
+        {error}
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -18,9 +73,8 @@ export default function Page() {
             <h1 className="text-xl font-semibold">Media Center</h1>
           </div>
         </div>
-        <FileGrid files={MOCK_FILES} />
+        <FileGrid files={files} />
       </main>
     </div>
-  )
+  );
 }
-
