@@ -94,8 +94,8 @@ export function FileGrid({ files: initialFiles }: FileGridProps) {
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="documents">Documents</SelectItem>
-              <SelectItem value="images">Images</SelectItem>
-              <SelectItem value="videos">Videos</SelectItem>
+              <SelectItem href="/my-drive/images" value="images">Images</SelectItem>
+              <SelectItem href="/my-drive/videos" value="videos">Videos</SelectItem>
             </SelectContent>
           </Select>
         </div>
