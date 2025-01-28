@@ -1,6 +1,5 @@
 "use client";
 
-import axios from "axios"; // اضافه کردن Axios
 import { useState } from "react";
 import { toast } from "sonner";
 import { Copy, Share2, Download, Lock, Unlock, Trash, Edit2 } from "lucide-react";
@@ -14,11 +13,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ShareDialog } from "./share-dialog";
 import { RenameDialog } from "./rename-dialog";
+import axios from "axios";
 
 interface ShareMenuProps {
-  fileId: string;
+  fileId: string; // FileGUID
   fileName: string;
-  attachmentUrlGuid: string; // اضافه کردن پارامتر جدید برای AttachmentURLGUID
+  fileDescription: string;
+  fileSize: string;
+  uploadedBy: string;
+  uploadedOn: string;
+  attachmentUrlGuid: string; // AttachmentURLGUID
   trigger: React.ReactNode;
   isLocked?: boolean;
   onLockToggle?: () => void;
@@ -29,6 +33,10 @@ interface ShareMenuProps {
 export function ShareMenu({
   fileId,
   fileName,
+  fileDescription,
+  fileSize,
+  uploadedBy,
+  uploadedOn,
   attachmentUrlGuid,
   trigger,
   isLocked,
@@ -39,12 +47,7 @@ export function ShareMenu({
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
 
-  const handleCopyLink = async () => {
-    const link = `https://your-domain.com/files/${fileId}`;
-    await navigator.clipboard.writeText(link);
-    toast.success("Link copied to clipboard");
-  };
-
+  // دانلود فایل
   const handleDownload = async () => {
     try {
       const downloadUrl = "https://cgl1106.cinnagen.com:9020/downloading_file";
@@ -52,15 +55,15 @@ export function ShareMenu({
       const response = await axios.post(
         downloadUrl,
         {
-          FileGUID: fileId, // مقدار داینامیک از props
-          AttachmentURLGUID: attachmentUrlGuid, // مقدار داینامیک از props
-          PasswordClear: "", // رمز عبور (می‌توان آن را نیز داینامیک کرد)
+          FileGUID: fileId,
+          AttachmentURLGUID: attachmentUrlGuid,
+          PasswordClear: "",
         },
         {
           headers: {
             "Content-Type": "application/json",
           },
-          responseType: "blob", // مهم: برای دریافت فایل به صورت باینری
+          responseType: "blob", // برای دریافت فایل به صورت باینری
         }
       );
 
@@ -69,7 +72,6 @@ export function ShareMenu({
       const videoTypes = ["mp4", "webm", "ogg", "avi", "mkv", "quicktime", "video/mp4"];
       const isVideo = videoTypes.some((type) => contentType.includes(type));
 
-      // استخراج نام فایل از Content-Disposition یا مقدار پیش‌فرض
       const filename = contentDisposition
         ? contentDisposition.split("filename=")[1]?.replace(/"/g, "")
         : fileName;
@@ -77,9 +79,7 @@ export function ShareMenu({
       if (isVideo) {
         // نمایش ویدیو
         const videoContainer = document.getElementById("videoContainer");
-        if (!videoContainer) {
-          throw new Error("Video container element not found.");
-        }
+        if (!videoContainer) throw new Error("Video container not found.");
 
         videoContainer.innerHTML = "";
 
@@ -110,9 +110,35 @@ export function ShareMenu({
       }
     } catch (error: any) {
       console.error("Download error:", error);
-      const errorMessage =
-        error.response?.data?.error || "Failed to download the file. Please try again.";
-      toast.error(errorMessage);
+      toast.error("Failed to download the file.");
+    }
+  };
+
+  // اشتراک‌گذاری فایل
+  const handleShare = async () => {
+    try {
+      const shareUrl = `https://cgl1106.cinnagen.com:9020/shareFile/?FileGUID=${encodeURIComponent(
+        fileId
+      )}`;
+      const shareMessage = `این فایل مورد نظر جهت دانلود میباشد: ${shareUrl}`;
+
+      const shareData = {
+        title: `Check out this file: ${fileName}`,
+        text: `File: ${fileName}\nDescription: ${fileDescription}\nUploaded By: ${uploadedBy}\nUploaded On: ${uploadedOn}\n\n${shareMessage}`,
+        url: shareUrl,
+      };
+
+      if (navigator.share) {
+        await navigator.share(shareData);
+        toast.success("File shared successfully!");
+      } else {
+        const clipboardText = `File: ${fileName}\nDescription: ${fileDescription}\n${shareMessage}`;
+        await navigator.clipboard.writeText(clipboardText);
+        toast.success("File link copied to clipboard!");
+      }
+    } catch (error) {
+      console.error("Error sharing file:", error);
+      toast.error("Failed to share the file.");
     }
   };
 
@@ -121,14 +147,10 @@ export function ShareMenu({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[200px]">
-          <DropdownMenuItem onClick={() => setShareDialogOpen(true)}>
+          <DropdownMenuItem onClick={handleShare}>
             <Share2 className="mr-2 h-4 w-4" />
             Share
             <DropdownMenuShortcut>⌃⌥A</DropdownMenuShortcut>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleCopyLink}>
-            <Copy className="mr-2 h-4 w-4" />
-            Copy link
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleDownload}>
             <Download className="mr-2 h-4 w-4" />
