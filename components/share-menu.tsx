@@ -23,11 +23,15 @@ interface ShareMenuProps {
   uploadedBy: string;
   uploadedOn: string;
   attachmentUrlGuid: string; // AttachmentURLGUID
+  correlationGuid: string; // CorrelationGUID
+  folderId: string; // FolderID
+  requiresPassword: boolean; // added: Does the file require a password?
   trigger: React.ReactNode;
   isLocked?: boolean;
   onLockToggle?: () => void;
   onDelete?: () => void;
   onRename?: (newName: string) => void;
+  onFileRemove?: (correlationGuid: string) => void; // For removing file from UI
 }
 
 export function ShareMenu({
@@ -38,16 +42,22 @@ export function ShareMenu({
   uploadedBy,
   uploadedOn,
   attachmentUrlGuid,
+  correlationGuid,
+  folderId,
+  requiresPassword,
   trigger,
   isLocked,
   onLockToggle,
   onDelete,
   onRename,
+  onFileRemove,
 }: ShareMenuProps) {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [viewerData, setViewerData] = useState<any[]>([]);
+  const [showViewerPopup, setShowViewerPopup] = useState(false);
 
-  // دانلود فایل
+  // **Manage download file**
   const handleDownload = async () => {
     try {
       const downloadUrl = "https://cgl1106.cinnagen.com:9020/downloading_file";
@@ -63,7 +73,7 @@ export function ShareMenu({
           headers: {
             "Content-Type": "application/json",
           },
-          responseType: "blob", // برای دریافت فایل به صورت باینری
+          responseType: "blob",
         }
       );
 
@@ -77,7 +87,6 @@ export function ShareMenu({
         : fileName;
 
       if (isVideo) {
-        // نمایش ویدیو
         const videoContainer = document.getElementById("videoContainer");
         if (!videoContainer) throw new Error("Video container not found.");
 
@@ -98,7 +107,6 @@ export function ShareMenu({
         videoPlayer.load();
         videoPlayer.play().catch((err) => console.error("Video playback error:", err));
       } else {
-        // دانلود فایل غیر ویدیویی
         const downloadUrl = URL.createObjectURL(response.data);
         const a = document.createElement("a");
         a.href = downloadUrl;
@@ -114,7 +122,7 @@ export function ShareMenu({
     }
   };
 
-  // اشتراک‌گذاری فایل
+  // **Manage share file**
   const handleShare = async () => {
     try {
       const shareUrl = `https://cgl1106.cinnagen.com:9020/shareFile/?FileGUID=${encodeURIComponent(
@@ -142,6 +150,64 @@ export function ShareMenu({
     }
   };
 
+  // **Manage delete file**
+  // **Manage delete file**
+  const handleDelete = async () => {
+    try {
+      const confirmDelete = window.confirm(
+        `Are you sure you want to delete the file "${fileName}"?`
+      );
+      if (!confirmDelete) return;
+
+      const deleteUrl = "https://cgl1106.cinnagen.com:9020/delete";
+
+      // Updated headers to include 'Accept' header
+      const response = await axios.delete(deleteUrl, {
+        data: {
+          CorrelationGUID: correlationGuid,
+          FolderID: folderId,
+          PasswordHash: "",
+        },
+        headers: {
+          "Content-Type": "application/json",  
+          Accept: "application/json",         
+        },
+        withCredentials: true,
+      });
+
+      if (response.status === 200) {
+        toast.success("File deleted successfully.");
+        onFileRemove?.(correlationGuid); 
+      } else {
+        toast.error("Failed to delete the file.");
+      }
+    } catch (error: any) {
+      console.error("Error deleting file:", error);
+      toast.error("Error deleting file. Please try again.");
+    }
+  };
+
+
+  // **Manage viewers (new feature)**
+  const handleViewer = async () => {
+    try {
+      const response = await axios.post(
+        "https://cgl1106.cinnagen.com:9020/get_viewers_info",
+        { FileGUID: fileId },
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      if (response.data && response.data.length > 0) {
+        setViewerData(response.data);
+      } else {
+        setViewerData([]);
+      }
+      setShowViewerPopup(true);
+    } catch (error) {
+      toast.error("Failed to fetch viewer data.");
+    }
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -156,32 +222,37 @@ export function ShareMenu({
             <Download className="mr-2 h-4 w-4" />
             Download
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+            <Trash className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
             <Edit2 className="mr-2 h-4 w-4" />
-            Rename
-            <DropdownMenuShortcut>⌃⌥E</DropdownMenuShortcut>
+            Edit
+            <DropdownMenuShortcut> </DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleViewer}>
+            <Edit2 className="mr-2 h-4 w-4" />
+            Viewer
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onLockToggle}>
-            {isLocked ? (
+            {requiresPassword ? (
               <>
-                <Unlock className="mr-2 h-4 w-4" />
-                Unlock
+                <Lock className="mr-2 h-4 w-4 text-red-500" />
+                Locked
               </>
             ) : (
               <>
-                <Lock className="mr-2 h-4 w-4" />
-                Lock
+                <Unlock className="mr-2 h-4 w-4 text-green-500" />
+                Unlocked
               </>
             )}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onDelete} className="text-destructive">
-            <Trash className="mr-2 h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
+      {/* Share Dialog */}
       <ShareDialog
         isOpen={shareDialogOpen}
         onClose={() => setShareDialogOpen(false)}
@@ -191,6 +262,7 @@ export function ShareMenu({
         }}
       />
 
+      {/* Rename Dialog */}
       <RenameDialog
         isOpen={renameDialogOpen}
         onClose={() => setRenameDialogOpen(false)}
@@ -200,6 +272,42 @@ export function ShareMenu({
           setRenameDialogOpen(false);
         }}
       />
+
+      {/* Viewer Popup */}
+      {showViewerPopup && (
+        <div className="modal">
+          <div className="modal-content">
+            <h2>Viewers</h2>
+            <table className="table-auto w-full">
+              <thead>
+                <tr>
+                  <th className="border px-4 py-2">Person</th>
+                  <th className="border px-4 py-2">Downloaded At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {viewerData.length === 0 ? (
+                  <tr>
+                    <td colSpan={2} className="border px-4 py-2 text-center">
+                      No viewers available.
+                    </td>
+                  </tr>
+                ) : (
+                  viewerData.map((viewer, index) => (
+                    <tr key={index}>
+                      <td className="border px-4 py-2">{viewer.person}</td>
+                      <td className="border px-4 py-2">{viewer.downloadedAt}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+            <button onClick={() => setShowViewerPopup(false)} className="close-btn">
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
