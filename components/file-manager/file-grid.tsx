@@ -11,12 +11,27 @@ import { UploadDialog } from "../upload-dialog"
 import { ShareMenu } from "../share-menu"
 import { ThemeToggle } from "../theme-toggle"
 import { DirectionToggle } from "../direction-toggle"
+// import { Pagination } from "../ui/pagination"
+
+
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 
 interface FileGridProps {
   files: FileItem[]
+  paginationNumber : number
+  pageSize : number
+  totalRecords : number
 }
 
-export function FileGrid({ files: initialFiles }: FileGridProps) {
+export function FileGrid({ files: initialFiles ,  paginationNumber , pageSize , totalRecords }: FileGridProps) {
   const [view, setView] = useState<"grid" | "list">("grid")
   const [files, setFiles] = useState(initialFiles)
   const [sortConfig, setSortConfig] = useState<SortConfig>({
@@ -55,9 +70,24 @@ export function FileGrid({ files: initialFiles }: FileGridProps) {
     if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1
     return 0
   })
+debugger
+  const currentFiles = sortedFiles.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  // let currentFiles;
+  // if (currentPage === 1) {
+  //   currentFiles = sortedFiles.slice(0, itemsPerPage);
+  //   console.log("sortedFiles length:", sortedFiles.length);
+  //   console.log("Slicing from:", (currentPage - 1) * itemsPerPage, "to:", currentPage * itemsPerPage);
 
-  const totalPages = Math.ceil(sortedFiles.length / itemsPerPage)
-  const currentFiles = sortedFiles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  // } else {
+  //   currentFiles = sortedFiles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  //   console.log("sortedFiles length:", sortedFiles.length);
+  //   console.log("Slicing from:", (currentPage - 1) * itemsPerPage, "to:", currentPage * itemsPerPage);
+
+  // }
+  console.log("page size :", pageSize);
+  console.log("Current Files:", currentFiles);
+
+  const totalPages = Math.ceil(totalRecords/pageSize)  
 
   const handleSort = (key: keyof FileItem) => {
     setSortConfig((current) => ({
@@ -73,9 +103,9 @@ export function FileGrid({ files: initialFiles }: FileGridProps) {
       setGoToPage("")
     }
   }
-
+debugger
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-4 nx-grid">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1">
           <div className="relative flex-1 max-w-sm">
@@ -194,12 +224,12 @@ export function FileGrid({ files: initialFiles }: FileGridProps) {
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 nx-pagination">
         <Select
           value={itemsPerPage.toString()}
           onValueChange={(value) => {
             setItemsPerPage(Number(value))
-            setCurrentPage(1)
+            setCurrentPage(value)
           }}
         >
           <SelectTrigger className="w-[70px]">
@@ -207,13 +237,13 @@ export function FileGrid({ files: initialFiles }: FileGridProps) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="10">10</SelectItem>
+            <SelectItem value="15">15</SelectItem>
             <SelectItem value="20">20</SelectItem>
-            <SelectItem value="50">50</SelectItem>
           </SelectContent>
         </Select>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="icon"
@@ -235,9 +265,67 @@ export function FileGrid({ files: initialFiles }: FileGridProps) {
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
-          </div>
+          </div> */}
+            {/* Pagination Component */}
+            <Pagination className="justify-center">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (currentPage > 1) setCurrentPage(currentPage - 1)
+                    }}
+                    className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+                {[...Array(totalPages)].map((_, i) => {
+                  const page = i + 1
+                  if (
+                    page === 1 ||
+                    page === totalPages ||
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  ) {
+                    return (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setCurrentPage(page)
+                          }}
+                          isActive={currentPage === page}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
+                  } else if (page === currentPage - 2 || page === currentPage + 2) {
+                    return (
+                      <PaginationItem key={page}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )
+                  }
+                  return null
+                })}
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (currentPage < totalPages) setCurrentPage(currentPage + 1)
+                    }}
+                    className={
+                      currentPage >= totalPages ? "pointer-events-none opacity-50" : ""
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
 
           <div className="flex items-center gap-2">
+
             <div className="flex items-center gap-2 bg-background rounded-md border px-2">
               <span className="text-sm text-muted-foreground">Go to</span>
               <Input
@@ -248,7 +336,7 @@ export function FileGrid({ files: initialFiles }: FileGridProps) {
                 onChange={(e) => setGoToPage(e.target.value)}
                 className="w-16 h-8 border-0 bg-transparent rtl:ml-2"
               />
-            </div>
+            </div>     
             <Button
               variant="secondary"
               size="sm"

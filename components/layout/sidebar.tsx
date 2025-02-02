@@ -110,7 +110,7 @@ export function Sidebar() {
       const hasChildren = folder.children && folder.children.length > 0;
 
       return (
-        <div key={folder.FolderID} className="ml-4">
+        <div key={folder.FolderID} className="ml-4 nx-sideBar">
           <div className="flex items-center gap-2 p-2 hover:bg-muted rounded-lg cursor-pointer">
             <div
               className="flex items-center gap-2"

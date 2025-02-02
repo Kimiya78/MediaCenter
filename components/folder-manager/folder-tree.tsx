@@ -23,7 +23,7 @@ function FolderItem({ folder, depth = 0, toggleFolder }: { folder: Folder; depth
   }, [toggleFolder, folder.FolderID]);
 
   return (
-    <div className="w-full">
+    <div className="w-full nx-folder-tree">
       <Link 
         href={`/folders/${folder.FolderGUID}`}
         className="flex items-center gap-2 p-2 hover:bg-muted rounded-lg"

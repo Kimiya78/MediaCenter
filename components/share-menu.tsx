@@ -295,8 +295,8 @@ export function ShareMenu({
                 ) : (
                   viewerData.map((viewer, index) => (
                     <tr key={index}>
-                      <td className="border px-4 py-2">{viewer.person}</td>
-                      <td className="border px-4 py-2">{viewer.downloadedAt}</td>
+                      <td className="border px-4 py-2">{viewer.CreatedBy}</td>
+                      <td className="border px-4 py-2">{viewer.DateTime}</td>
                     </tr>
                   ))
                 )}

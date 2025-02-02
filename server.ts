@@ -6,7 +6,7 @@ const next = require('next');
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
-const port = 3000;
+const port = 8289;
 
 // Prepare the app
 app.prepare().then(() => {
@@ -22,6 +22,6 @@ handle(req, res);
 )
 .listen(port, (err: any) => {
 if (err) throw err;
-console.log('> Ready on https://localhost:3000');
+console.log('> Ready on https://cgl1106.cinnagen.com:8289');
 });
 });

@@ -5,16 +5,31 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { FileGrid } from "@/components/file-manager/file-grid";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { DirectionToggle } from "@/components/direction-toggle";
-import { Pagination } from "@/components/ui/pagination"; // Import Pagination Component
+// import { Pagination } from "@/components/ui/pagination"; // Import Pagination Component
 import type { FileItem } from "@/types/file";
+
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
+
+import { MediaGrid } from "@/components/media-grid"
 
 export default function Page() {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const pageSize = 8; 
+  const [totalRecords, setTotalRecords] = useState(1);
+  const [pageSize, setPageSize] = useState(8);
+  const [currentPage, setCurrentPage] = useState(1)
+  // const [media, setMedia] = useState<MediaResponse | null>(null)
+
 
   const fetchData = async (page: number) => {
     setLoading(true);
@@ -28,7 +43,11 @@ export default function Page() {
       }
 
       const apiData = await response.json();
-      
+      const filesItem  = (apiData.items);
+      setPageNumber(apiData.page_number)
+      setTotalRecords(apiData.total_records) 
+      setPageSize(apiData.page_size)
+
       const transformedData: FileItem[] = apiData.items.map((item: any) => ({
         id: item.FileGUID,
         name: item.FileName,
@@ -42,7 +61,7 @@ export default function Page() {
       }));
 
       setFiles(transformedData);
-      setTotalPages(apiData.total_pages || 1);
+      //setTotalPages(apiData.total_pages || 1);
     } catch (error) {
       setError("Error fetching data. Please try again.");
       console.error("Fetch error:", error);
@@ -81,14 +100,13 @@ export default function Page() {
           </div>
         </div>
 
-        <FileGrid files={files} />
+        <FileGrid files={files} paginationNumber={pageNumber} pageSize={pageSize} totalRecords={totalRecords} />
+        
+        {/* <FileGrid files={filesItem}  /> */}
+        <div className="p-4">
+          <MediaGrid />
+        </div>
 
-        {/* Pagination Component */}
-        <Pagination 
-          currentPage={pageNumber} 
-          totalPages={totalPages} 
-          onPageChange={setPageNumber} 
-        />
       </main>
     </div>
   );
