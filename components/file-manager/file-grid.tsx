@@ -1,19 +1,14 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import type { FileItem, SortConfig } from "@/types/file"
 import { FileCard } from "./file-card"
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { LayoutGrid, List, Search, Upload, ChevronLeft, ChevronRight } from "lucide-react"
+import { LayoutGrid, List, Search, Upload } from "lucide-react"
 import { UploadDialog } from "../upload-dialog"
 import { ShareMenu } from "../share-menu"
-import { ThemeToggle } from "../theme-toggle"
-import { DirectionToggle } from "../direction-toggle"
-// import { Pagination } from "../ui/pagination"
-
-
 import {
   Pagination,
   PaginationContent,
@@ -25,32 +20,69 @@ import {
 } from "@/components/ui/pagination"
 
 interface FileGridProps {
-  files: FileItem[]
-  paginationNumber : number
-  pageSize : number
-  totalRecords : number
+  initialFiles: FileItem[]
 }
 
-export function FileGrid({ files: initialFiles ,  paginationNumber , pageSize , totalRecords }: FileGridProps) {
+export function FileGrid({ initialFiles }: FileGridProps) {
   const [view, setView] = useState<"grid" | "list">("grid")
-  const [files, setFiles] = useState(initialFiles)
+  const [files, setFiles] = useState<FileItem[]>([])
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: "name",
     direction: "asc",
   })
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState("")
-  const [itemsPerPage] = useState(8) // Fixed to 8 items per page
+  const [pageSize, setPageSize] = useState(10)
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [goToPage, setGoToPage] = useState("")
   const [fileType, setFileType] = useState<string>("all")
+  const [totalRecords, setTotalRecords] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchFiles = async (page: number) => {
+    setIsLoading(true)
+    try {
+      const response = await fetch(
+        `https://cgl1106.cinnagen.com:9020/fetch_media?page_number=${page}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=6`,
+      )
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data. Status: ${response.status}`)
+      }
+      const apiData = await response.json()
+      const transformedData: FileItem[] = apiData.items.map((item: any) => ({
+        id: item.FileGUID,
+        name: item.FileName,
+        type: item.FileExtension,
+        size: item.FileSize / 1024, // Convert bytes to KB
+        createdBy: item.CreatedBy,
+        createdDate: item.CreatedDateTime.split(" ")[0],
+        description: item.Description,
+        permission: item.allowDeleteFile === "true" ? "owner" : "viewer",
+        isLocked: false,
+      }))
+      setFiles(transformedData)
+      setTotalRecords(apiData.total_records)
+      setPageSize(apiData.page_size)
+      setError(null)
+    } catch (error) {
+      setError("Error fetching data. Please try again.")
+      console.error("Fetch error:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchFiles(currentPage)
+  }, [currentPage, pageSize])
 
   const filteredFiles = files.filter((file) => {
     const nameMatch = file.name.toLowerCase().includes(searchQuery.toLowerCase())
     if (fileType === "all") return nameMatch
 
     const typeMap: Record<string, string[]> = {
-      documents: ["pdf", "docx", "txt"],
+      documents: ["pdf", "docx", "txt" ,"xlx" , "docx" , "xlsx"],
       images: ["jpg", "jpeg", "png", "gif"],
       videos: ["mp4", "mov", "avi"],
     }
@@ -70,24 +102,8 @@ export function FileGrid({ files: initialFiles ,  paginationNumber , pageSize , 
     if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1
     return 0
   })
-debugger
-  const currentFiles = sortedFiles.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-  // let currentFiles;
-  // if (currentPage === 1) {
-  //   currentFiles = sortedFiles.slice(0, itemsPerPage);
-  //   console.log("sortedFiles length:", sortedFiles.length);
-  //   console.log("Slicing from:", (currentPage - 1) * itemsPerPage, "to:", currentPage * itemsPerPage);
 
-  // } else {
-  //   currentFiles = sortedFiles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  //   console.log("sortedFiles length:", sortedFiles.length);
-  //   console.log("Slicing from:", (currentPage - 1) * itemsPerPage, "to:", currentPage * itemsPerPage);
-
-  // }
-  console.log("page size :", pageSize);
-  console.log("Current Files:", currentFiles);
-
-  const totalPages = Math.ceil(totalRecords/pageSize)  
+  const totalPages = Math.ceil(totalRecords / pageSize)
 
   const handleSort = (key: keyof FileItem) => {
     setSortConfig((current) => ({
@@ -103,7 +119,7 @@ debugger
       setGoToPage("")
     }
   }
-debugger
+
   return (
     <div className="p-4 space-y-4 nx-grid">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -124,8 +140,12 @@ debugger
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="documents">Documents</SelectItem>
-              <SelectItem href="/my-drive/images" value="images">Images</SelectItem>
-              <SelectItem href="/my-drive/videos" value="videos">Videos</SelectItem>
+              <SelectItem href="/my-drive/images" value="images">
+                Images
+              </SelectItem>
+              <SelectItem href="/my-drive/videos" value="videos">
+                Videos
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -157,8 +177,8 @@ debugger
       </div>
 
       {view === "grid" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 lg:grid-cols-3 gap-4">
-          {currentFiles.map((file) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 lg:grid-cols-3 gap-4">
+          {sortedFiles.map((file) => (
             <FileCard key={file.id} file={file} />
           ))}
         </div>
@@ -186,7 +206,7 @@ debugger
               </tr>
             </thead>
             <tbody>
-              {currentFiles.map((file) => (
+              {sortedFiles.map((file) => (
                 <tr key={file.id} className="border-b">
                   <td className="px-4 py-3">{file.name}</td>
                   <td className="px-4 py-3">{file.type}</td>
@@ -226,10 +246,10 @@ debugger
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 nx-pagination">
         <Select
-          value={itemsPerPage.toString()}
+          value={pageSize.toString()}
           onValueChange={(value) => {
-            setItemsPerPage(Number(value))
-            setCurrentPage(value)
+            setPageSize(Number(value))
+            setCurrentPage(1) // Reset to page 1 when changing page size
           }}
         >
           <SelectTrigger className="w-[70px]">
@@ -243,89 +263,58 @@ debugger
         </Select>
 
         <div className="flex items-center gap-4">
-          {/* <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="rtl:ml-2 rtl:mr-0"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-sm">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="rtl:mr-2 rtl:ml-0"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div> */}
-            {/* Pagination Component */}
-            <Pagination className="justify-center">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      if (currentPage > 1) setCurrentPage(currentPage - 1)
-                    }}
-                    className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-                {[...Array(totalPages)].map((_, i) => {
-                  const page = i + 1
-                  if (
-                    page === 1 ||
-                    page === totalPages ||
-                    (page >= currentPage - 1 && page <= currentPage + 1)
-                  ) {
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            setCurrentPage(page)
-                          }}
-                          isActive={currentPage === page}
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    )
-                  } else if (page === currentPage - 2 || page === currentPage + 2) {
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                    )
-                  }
-                  return null
-                })}
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      if (currentPage < totalPages) setCurrentPage(currentPage + 1)
-                    }}
-                    className={
-                      currentPage >= totalPages ? "pointer-events-none opacity-50" : ""
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
+          <Pagination className="justify-center">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    if (currentPage > 1) setCurrentPage(currentPage - 1)
+                  }}
+                  className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+              {[...Array(totalPages)].map((_, i) => {
+                const page = i + 1
+                if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                  return (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setCurrentPage(page)
+                        }}
+                        isActive={currentPage === page}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                } else if (page === currentPage - 2 || page === currentPage + 2) {
+                  return (
+                    <PaginationItem key={page}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )
+                }
+                return null
+              })}
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    if (currentPage < totalPages) setCurrentPage(currentPage + 1)
+                  }}
+                  className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
 
           <div className="flex items-center gap-2">
-
             <div className="flex items-center gap-2 bg-background rounded-md border px-2">
               <span className="text-sm text-muted-foreground">Go to</span>
               <Input
@@ -336,7 +325,7 @@ debugger
                 onChange={(e) => setGoToPage(e.target.value)}
                 className="w-16 h-8 border-0 bg-transparent rtl:ml-2"
               />
-            </div>     
+            </div>
             <Button
               variant="secondary"
               size="sm"
