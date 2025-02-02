@@ -1,35 +1,3 @@
-// "use client"
-
-// import { ChevronDown, FolderClosed, Image, Video } from "lucide-react"
-// import Link from "next/link"
-
-// export function Sidebar() {
-//   return (
-//     <div className="w-64 h-screen border-r bg-background text-foreground">
-//       <div className="p-4 flex flex-col h-full">
-//         <h1 className="text-xl font-bold mb-8">Folders</h1>
-//         <nav className="space-y-2">
-//           <div>
-//             <Link href="/my-drive" className="flex items-center gap-2 p-2 hover:bg-muted rounded-lg">
-//               <ChevronDown className="w-4 h-4 rtl:rotate-180" />
-//               <FolderClosed className="w-4 h-4" />
-//               My Drive
-//             </Link>
-//             <div className="ml-4 rtl:mr-4 rtl:ml-0 space-y-1">
-//               <Link href="/my-drive/documents" className="flex items-center gap-2 p-2 hover:bg-muted rounded-lg">
-//                 <FolderClosed className="w-4 h-4" />
-//                 Documents
-//               </Link>
-//             </div>
-//           </div>
-
-//         </nav>
-//       </div>
-//     </div>
-//   )
-// }
-
-
 "use client";
 
 import { ChevronDown, ChevronRight, FolderClosed } from "lucide-react";
@@ -37,15 +5,19 @@ import Link from "next/link";
 import { useState } from "react";
 import NexxFetch from "@/data/response-handling";
 import { FolderItem } from "@/types/type";
+import { useFolder } from "@/components/folder-manager/context"; // Import the useFolder hook
 
 export function Sidebar() {
   const navigationItemsUrl = "https://cgl1106.cinnagen.com:9020/get-allFolder";
   const [expandedFolders, setExpandedFolders] = useState<Set<number>>(new Set());
+  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null); // Track selected folder
 
   const { data, isLoading, error } = NexxFetch.useGetData<{ folders: FolderItem[] }>(
     navigationItemsUrl,
     ["Folders"]
   );
+
+  const { setSelectedFolderId: updateContextFolder } = useFolder();
 
   if (isLoading) return <p>Loading folders...</p>;
   if (error) return <p>Error loading folders: {error.message}</p>;
@@ -108,14 +80,20 @@ export function Sidebar() {
     return folders.map((folder) => {
       const isExpanded = expandedFolders.has(folder.FolderID);
       const hasChildren = folder.children && folder.children.length > 0;
+      const isSelected = folder.FolderID === selectedFolderId;
 
       return (
         <div key={folder.FolderID} className="ml-4 nx-sideBar">
-          <div className="flex items-center gap-2 p-2 hover:bg-muted rounded-lg cursor-pointer">
-            <div
-              className="flex items-center gap-2"
-              onClick={() => hasChildren && toggleFolder(folder.FolderID)}
-            >
+          <div
+            className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer ${
+              isSelected ? "bg-[#668ed1]" : "hover:bg-muted"
+            }`}
+            onClick={() => {
+              setSelectedFolderId(folder.FolderID);
+              updateContextFolder(folder.FolderID);
+            }}
+          >
+            <div className="flex items-center gap-2" onClick={() => hasChildren && toggleFolder(folder.FolderID)}>
               {hasChildren && (
                 <div className="w-4 h-4">
                   {isExpanded ? (
@@ -126,16 +104,12 @@ export function Sidebar() {
                 </div>
               )}
               <FolderClosed className="w-4 h-4" />
-              <Link href={`/folder/${folder.FolderID}`}>
-                <span className={folder.PasswordRequired ? "text-red-500" : ""}>
-                  {folder.FolderName}
-                </span>
+              <Link href="#">
+                <span className={folder.PasswordRequired ? "text-red-500" : ""}>{folder.FolderName}</span>
               </Link>
             </div>
           </div>
-          {hasChildren && isExpanded && (
-            <div className="ml-4">{renderFolderTree(folder.children)}</div>
-          )}
+          {hasChildren && isExpanded && <div className="ml-4">{renderFolderTree(folder.children)}</div>}
         </div>
       );
     });
@@ -150,4 +124,3 @@ export function Sidebar() {
     </div>
   );
 }
-

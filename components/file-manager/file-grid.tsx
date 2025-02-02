@@ -21,9 +21,10 @@ import {
 
 interface FileGridProps {
   initialFiles: FileItem[]
+  selectedFolderId: string // Add selectedFolderId to the props
 }
 
-export function FileGrid({ initialFiles }: FileGridProps) {
+export function FileGrid({ initialFiles, selectedFolderId }: FileGridProps) {
   const [view, setView] = useState<"grid" | "list">("grid")
   const [files, setFiles] = useState<FileItem[]>([])
   const [sortConfig, setSortConfig] = useState<SortConfig>({
@@ -44,7 +45,7 @@ export function FileGrid({ initialFiles }: FileGridProps) {
     setIsLoading(true)
     try {
       const response = await fetch(
-        `https://cgl1106.cinnagen.com:9020/fetch_media?page_number=${page}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=6`,
+        `https://cgl1106.cinnagen.com:9020/fetch_media?page_number=${page}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${selectedFolderId}`, // Use selectedFolderId here
       )
       if (!response.ok) {
         throw new Error(`Failed to fetch data. Status: ${response.status}`)
@@ -75,14 +76,14 @@ export function FileGrid({ initialFiles }: FileGridProps) {
 
   useEffect(() => {
     fetchFiles(currentPage)
-  }, [currentPage, pageSize])
+  }, [currentPage, pageSize, selectedFolderId]) // Add selectedFolderId to the dependency array
 
   const filteredFiles = files.filter((file) => {
     const nameMatch = file.name.toLowerCase().includes(searchQuery.toLowerCase())
     if (fileType === "all") return nameMatch
 
     const typeMap: Record<string, string[]> = {
-      documents: ["pdf", "docx", "txt" ,"xlx" , "docx" , "xlsx"],
+      documents: ["pdf", "docx", "txt", "xlx", "docx", "xlsx"],
       images: ["jpg", "jpeg", "png", "gif"],
       videos: ["mp4", "mov", "avi"],
     }
@@ -121,7 +122,7 @@ export function FileGrid({ initialFiles }: FileGridProps) {
   }
 
   return (
-    <div className="p-4 space-y-4 nx-grid">
+    <div className="p-4 space-y-4 nx-grid grid-rows-[1rem_auto_1rem]">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1">
           <div className="relative flex-1 max-w-sm">
@@ -316,7 +317,7 @@ export function FileGrid({ initialFiles }: FileGridProps) {
 
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2 bg-background rounded-md border px-2">
-              <span className="text-sm text-muted-foreground">Go to</span>
+              <span className="text-sm text-muted-foreground w-16">Go to</span>
               <Input
                 type="number"
                 min={1}
@@ -350,4 +351,3 @@ export function FileGrid({ initialFiles }: FileGridProps) {
     </div>
   )
 }
-
