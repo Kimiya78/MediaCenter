@@ -57,8 +57,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { useState } from "react";
 
 export default function Page() {
+
+
+
+
   return (
     <FolderProvider>
       <div className="flex h-screen bg-background">
@@ -83,8 +88,20 @@ export default function Page() {
 
 function FileGridWrapper() {
   const { selectedFolderId } = useFolder(); // Get the selectedFolderId from the context
+  const [files, setFiles] = useState<{ id: number; name: string; description: string }[]>([]);
+
+  // Function to handle new file uploads
+  const handleUpload = (file: File, description: string) => {
+    const newFile = {
+      id: Date.now(), // Use a unique ID (e.g., timestamp)
+      name: file.name,
+      description,
+    };
+    setFiles((prevFiles) => [...prevFiles, newFile]);
+  };
+
 
   return (
-    <FileGrid initialFiles={[]} selectedFolderId={selectedFolderId} />
+    <FileGrid initialFiles={files} selectedFolderId={selectedFolderId} />
   );
 }

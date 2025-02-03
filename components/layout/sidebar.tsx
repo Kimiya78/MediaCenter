@@ -86,7 +86,7 @@ export function Sidebar() {
         <div key={folder.FolderID} className="ml-4 nx-sideBar">
           <div
             className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer ${
-              isSelected ? "bg-[#668ed1]" : "hover:bg-muted"
+              isSelected ? "bg-muted" : "hover:bg-muted"
             }`}
             onClick={() => {
               setSelectedFolderId(folder.FolderID);
