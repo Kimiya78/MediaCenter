@@ -1,14 +1,15 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import type { FileItem, SortConfig } from "@/types/file";
-import { FileCard } from "./file-card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LayoutGrid, List, Search, Upload } from "lucide-react";
-import { UploadDialog } from "../upload-dialog";
-import { ShareMenu } from "../share-menu";
+import { useEffect, useState } from "react"
+import type { FileItem, SortConfig } from "@/types/file"
+import { FileCard } from "./file-card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { LayoutGrid, List, Search, Upload, MoreVertical } from "lucide-react"
+import { UploadDialog } from "../upload-dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { ShareMenu } from "../share-menu"
 import {
   Pagination,
   PaginationContent,
@@ -17,43 +18,43 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination";
+} from "@/components/ui/pagination"
+import { useDirection } from "@/components/folder-manager/context"
 
 interface FileGridProps {
-  initialFiles: FileItem[];
-  selectedFolderId: string;
+  initialFiles: FileItem[]
+  selectedFolderId: string
 }
 
 export function FileGrid({ initialFiles, selectedFolderId }: FileGridProps) {
-  const [view, setView] = useState<"grid" | "list">("grid");
-  const [files, setFiles] = useState<FileItem[]>([]);
-  // Set default sort to createdDate in descending order
+  const { dir } = useDirection()
+  const [view, setView] = useState<"grid" | "list">("grid")
+  const [files, setFiles] = useState<FileItem[]>([])
   const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: "createdDate",
-    direction: "desc",
-  });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [goToPage, setGoToPage] = useState("");
-  const [fileType, setFileType] = useState<string>("all");
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  // Track the new file for animation
-  const [newFileId, setNewFileId] = useState<string | null>(null);
+    key: "name",
+    direction: "asc",
+  })
+  const [currentPage, setCurrentPage] = useState(1)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [pageSize, setPageSize] = useState(10)
+  const [isUploadOpen, setIsUploadOpen] = useState(false)
+  const [goToPage, setGoToPage] = useState("")
+  const [fileType, setFileType] = useState<string>("all")
+  const [totalRecords, setTotalRecords] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [newFileId, setNewFileId] = useState<string | null>(null)
 
   const fetchFiles = async (page: number) => {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
       const response = await fetch(
-        `https://cgl1106.cinnagen.com:9020/fetch_media?page_number=${page}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${selectedFolderId}`
-      );
+        `https://cgl1106.cinnagen.com:9020/fetch_media?page_number=${page}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${selectedFolderId}`,
+      )
       if (!response.ok) {
-        throw new Error(`Failed to fetch data. Status: ${response.status}`);
+        throw new Error(`Failed to fetch data. Status: ${response.status}`)
       }
-      const apiData = await response.json();
+      const apiData = await response.json()
       const transformedData: FileItem[] = apiData.items.map((item: any) => ({
         id: item.FileGUID,
         name: item.FileName,
@@ -64,69 +65,70 @@ export function FileGrid({ initialFiles, selectedFolderId }: FileGridProps) {
         description: item.Description,
         permission: item.allowDeleteFile === "true" ? "owner" : "viewer",
         isLocked: false,
-      }));
-      setFiles(transformedData);
-      setTotalRecords(apiData.total_records);
-      setPageSize(apiData.page_size);
-      setError(null);
+      }))
+      setFiles(transformedData)
+      setTotalRecords(apiData.total_records)
+      setPageSize(apiData.page_size)
+      setError(null)
     } catch (error) {
-      setError("Error fetching data. Please try again.");
-      console.error("Fetch error:", error);
+      setError("Error fetching data. Please try again.")
+      console.error("Fetch error:", error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    fetchFiles(currentPage);
-  }, [currentPage, pageSize, selectedFolderId]);
+    fetchFiles(currentPage)
+  }, [currentPage, pageSize, selectedFolderId])
 
   const filteredFiles = files.filter((file) => {
-    const nameMatch = file.name.toLowerCase().includes(searchQuery.toLowerCase());
-    if (fileType === "all") return nameMatch;
+    const nameMatch = file.name.toLowerCase().includes(searchQuery.toLowerCase())
+    if (fileType === "all") return nameMatch
 
     const typeMap: Record<string, string[]> = {
       documents: ["pdf", "docx", "txt", "xlx", "docx", "xlsx"],
       images: ["jpg", "jpeg", "png", "gif"],
       videos: ["mp4", "mov", "avi"],
-    };
-
-    return nameMatch && typeMap[fileType]?.includes(file.type.toLowerCase());
-  });
-
-  const sortedFiles = [...filteredFiles].sort((a, b) => {
-    const aValue = a[sortConfig.key];
-    const bValue = b[sortConfig.key];
-
-    if (typeof aValue === "string" && typeof bValue === "string") {
-      return sortConfig.direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
     }
 
-    if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
-    if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
-    return 0;
-  });
+    return nameMatch && typeMap[fileType]?.includes(file.type.toLowerCase())
+  })
 
-  const totalPages = Math.ceil(totalRecords / pageSize);
+  const sortedFiles = [...files].sort((a, b) => {
+    const aValue = a[sortConfig.key]
+    const bValue = b[sortConfig.key]
+
+    if (typeof aValue === "string" && typeof bValue === "string") {
+      return sortConfig.direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue)
+    }
+
+    if (typeof aValue === "number" && typeof bValue === "number") {
+      return sortConfig.direction === "asc" ? aValue - bValue : bValue - aValue
+    }
+
+    return 0
+  })
+
+  const totalPages = Math.ceil(totalRecords / pageSize)
 
   const handleSort = (key: keyof FileItem) => {
     setSortConfig((current) => ({
       key,
       direction: current.key === key && current.direction === "asc" ? "desc" : "asc",
-    }));
-  };
+    }))
+  }
 
   const handleGoToPage = () => {
-    const pageNumber = Number.parseInt(goToPage);
+    const pageNumber = Number.parseInt(goToPage)
     if (pageNumber >= 1 && pageNumber <= totalPages) {
-      setCurrentPage(pageNumber);
-      setGoToPage("");
+      setCurrentPage(pageNumber)
+      setGoToPage("")
     }
-  };
+  }
 
-  // Add new file at the top so that newest files (by upload date) always show first
   const addNewFile = (file: File, description: string) => {
-    const today = new Date();
+    const today = new Date()
     const newFile: FileItem = {
       id: Date.now().toString(),
       name: file.name,
@@ -137,15 +139,86 @@ export function FileGrid({ initialFiles, selectedFolderId }: FileGridProps) {
       description,
       permission: "owner",
       isLocked: false,
-    };
+    }
 
-    // Insert at the beginning and trigger the animation
-    setFiles((prevFiles) => [newFile, ...prevFiles]);
-    setNewFileId(newFile.id);
+    setFiles((prevFiles) => [newFile, ...prevFiles])
+    setNewFileId(newFile.id)
     setTimeout(() => {
-      setNewFileId(null);
-    }, 2000);
-  };
+      setNewFileId(null)
+    }, 2000)
+  }
+
+  const FileActions = ({ file }: { file: FileItem }) => {
+    debugger
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem>Download</DropdownMenuItem>
+          <DropdownMenuItem>Share</DropdownMenuItem>
+          <DropdownMenuItem>Rename</DropdownMenuItem>
+          <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
+
+
+  const renderTableHeader = () => {
+    const headers = [
+      { key: "name", label: dir === "rtl" ? "نام فایل" : "Name" },
+      { key: "type", label: dir === "rtl" ? "نوع" : "Type" },
+      { key: "size", label: dir === "rtl" ? "سایز" : "Size" },
+      { key: "createdBy", label: dir === "rtl" ? "ایجاد کننده" : "Created By" },
+      { key: "createdDate", label: dir === "rtl" ? "تاریخ ایجاد" : "Created Date" },
+    ]
+
+    return (
+      <tr className="border-b">
+        {headers.map(({ key, label }) => (
+          <th
+            key={key}
+            className={`px-4 py-3 cursor-pointer hover:bg-muted/50 ${dir === "rtl" ? "text-right" : "text-left"}`}
+            onClick={() => handleSort(key as keyof FileItem)}
+          >
+            <div className="flex items-center gap-2">
+              {label}
+              {sortConfig.key === key && <span className="text-xs">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>}
+            </div>
+          </th>
+        ))}
+        <th className="px-4 py-3 w-10"></th>
+      </tr>
+    )
+  }
+
+  const renderTableBody = () => {
+    return sortedFiles.map((file) => (
+      <tr key={file.id} className="border-b hover:bg-muted/50">
+        {["name", "type", "size", "createdBy", "createdDate"].map((field) => (
+          <td key={field} className={`px-4 py-3 ${dir === "rtl" ? "text-right" : "text-left"}`}>
+            {file[field as keyof FileItem]}
+          </td>
+        ))}
+        <td className="px-4 py-3 text-right">
+          <ShareMenu
+                      fileId={file.id}
+                      fileName={file.name}
+                      trigger={
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      }
+                      isLocked={file.isLocked}
+                    />
+        </td>
+      </tr>
+    ))
+  }
 
   return (
     <div className="h-screen flex flex-col">
@@ -156,7 +229,7 @@ export function FileGrid({ initialFiles, selectedFolderId }: FileGridProps) {
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search files..."
+                placeholder={dir === "rtl" ? "جستجوی فایل ها..." : "Search files..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8"
@@ -164,13 +237,13 @@ export function FileGrid({ initialFiles, selectedFolderId }: FileGridProps) {
             </div>
             <Select value={fileType} onValueChange={setFileType}>
               <SelectTrigger className="w-full sm:w-32">
-                <SelectValue placeholder="Filter" />
+                <SelectValue placeholder={dir === "rtl" ? "فیلتر" : "Filter"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="documents">Documents</SelectItem>
-                <SelectItem value="images">Images</SelectItem>
-                <SelectItem value="videos">Videos</SelectItem>
+                <SelectItem value="all">{dir === "rtl" ? "همه" : "All"}</SelectItem>
+                <SelectItem value="documents">{dir === "rtl" ? "اسناد" : "Documents"}</SelectItem>
+                <SelectItem value="images">{dir === "rtl" ? "تصاویر" : "Images"}</SelectItem>
+                <SelectItem value="videos">{dir === "rtl" ? "ویدیوها" : "Videos"}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -196,7 +269,7 @@ export function FileGrid({ initialFiles, selectedFolderId }: FileGridProps) {
             </div>
             <Button onClick={() => setIsUploadOpen(true)}>
               <Upload className="mr-2 h-4 w-4" />
-              Upload
+              {dir === "rtl" ? "آپلود" : "Upload"}
             </Button>
           </div>
         </div>
@@ -208,78 +281,28 @@ export function FileGrid({ initialFiles, selectedFolderId }: FileGridProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 lg:grid-cols-3 gap-4">
             {sortedFiles.map((file) => (
               <div key={file.id} className={`${newFileId === file.id ? "animate-new-file" : ""}`}>
-                <FileCard file={file} />
+                <FileCard file={file} actions={<FileActions file={file} />} />
               </div>
             ))}
           </div>
         ) : (
           <div className="rounded-lg border bg-card">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort("name")}>
-                    Name
-                  </th>
-                  <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort("type")}>
-                    Type
-                  </th>
-                  <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort("size")}>
-                    Size
-                  </th>
-                  <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort("createdBy")}>
-                    Created By
-                  </th>
-                  <th className="px-4 py-3 text-left cursor-pointer" onClick={() => handleSort("createdDate")}>
-                    Created Date
-                  </th>
-                  <th className="px-4 py-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedFiles.map((file) => (
-                  <tr key={file.id} className={`border-b ${newFileId === file.id ? "animate-new-file" : ""}`}>
-                    <td className="px-4 py-3">{file.name}</td>
-                    <td className="px-4 py-3">{file.type}</td>
-                    <td className="px-4 py-3">{file.size} MB</td>
-                    <td className="px-4 py-3">{file.createdBy}</td>
-                    <td className="px-4 py-3">{file.createdDate}</td>
-                    <td className="px-4 py-3">
-                      <ShareMenu
-                        fileId={file.id}
-                        fileName={file.name}
-                        trigger={
-                          <Button variant="ghost" size="icon">
-                            ⋮
-                          </Button>
-                        }
-                        isLocked={file.isLocked}
-                        onLockToggle={() => {
-                          console.log("Toggle lock for:", file.id);
-                        }}
-                        onDelete={() => {
-                          console.log("Delete file:", file.id);
-                        }}
-                        onRename={(newName) => {
-                          console.log("Rename file:", file.id, "to:", newName);
-                        }}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+            <table className="min-w-full rounded-lg overflow-hidden">
+              <thead>{renderTableHeader()}</thead>
+              <tbody>{renderTableBody()}</tbody>
             </table>
           </div>
         )}
       </div>
 
-      {/* Fixed Footer */}
+      {/* Fixed Footer with RTL-aware pagination */}
       <div className="sticky bottom-0 z-10 bg-background border-t p-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <Select
             value={pageSize.toString()}
             onValueChange={(value) => {
-              setPageSize(Number(value));
-              setCurrentPage(1);
+              setPageSize(Number(value))
+              setCurrentPage(1)
             }}
           >
             <SelectTrigger className="w-[70px]">
@@ -294,66 +317,87 @@ export function FileGrid({ initialFiles, selectedFolderId }: FileGridProps) {
 
           <div className="flex items-center gap-4">
             <Pagination className="justify-center">
-              <PaginationContent>
+              <PaginationContent dir={dir}>
                 <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage > 1) setCurrentPage(currentPage - 1);
-                    }}
-                    className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
-                  />
+                  {dir === "rtl" ? (
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        if (currentPage < totalPages) setCurrentPage(currentPage + 1)
+                      }}
+                      className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+                    />
+                  ) : (
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        if (currentPage > 1) setCurrentPage(currentPage - 1)
+                      }}
+                      className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+                    />
+                  )}
                 </PaginationItem>
                 {[...Array(totalPages)].map((_, i) => {
-                  const page = i + 1;
+                  const page = i + 1
                   if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
                     return (
                       <PaginationItem key={page}>
                         <PaginationLink
                           href="#"
                           onClick={(e) => {
-                            e.preventDefault();
-                            setCurrentPage(page);
+                            e.preventDefault()
+                            setCurrentPage(page)
                           }}
                           isActive={currentPage === page}
                         >
                           {page}
                         </PaginationLink>
                       </PaginationItem>
-                    );
+                    )
                   } else if (page === currentPage - 2 || page === currentPage + 2) {
                     return (
                       <PaginationItem key={page}>
                         <PaginationEllipsis />
                       </PaginationItem>
-                    );
+                    )
                   }
-                  return null;
+                  return null
                 })}
                 <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-                    }}
-                    className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
-                  />
+                  {dir === "rtl" ? (
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        if (currentPage > 1) setCurrentPage(currentPage - 1)
+                      }}
+                      className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+                    />
+                  ) : (
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        if (currentPage < totalPages) setCurrentPage(currentPage + 1)
+                      }}
+                      className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+                    />
+                  )}
                 </PaginationItem>
               </PaginationContent>
             </Pagination>
 
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2 bg-background rounded-md border px-2">
-                <span className="text-sm text-muted-foreground w-16">Go to</span>
                 <Input
                   type="number"
                   min={1}
                   max={totalPages}
                   value={goToPage}
                   onChange={(e) => setGoToPage(e.target.value)}
-                  className="w-16 h-8 border-0 bg-transparent rtl:ml-2"
+                  className="w-16 h-8 border-0 bg-transparent rtl:mr-2"
                 />
               </div>
               <Button
@@ -361,25 +405,24 @@ export function FileGrid({ initialFiles, selectedFolderId }: FileGridProps) {
                 size="sm"
                 onClick={handleGoToPage}
                 disabled={!goToPage || Number.parseInt(goToPage) < 1 || Number.parseInt(goToPage) > totalPages}
-                className="rtl:ml-2"
               >
-                Go
+                {dir === "rtl" ? " برو به" : "Go"}
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Upload Dialog with new file addition and animation */}
+      {/* Upload Dialog */}
       <UploadDialog
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
         onUpload={(file, description) => {
-          addNewFile(file, description);
-          setIsUploadOpen(false);
+          addNewFile(file, description)
+          setIsUploadOpen(false)
         }}
         destination="My Drive"
       />
     </div>
-  );
+  )
 }

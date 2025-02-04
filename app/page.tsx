@@ -46,7 +46,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { FileGrid } from "@/components/file-manager/file-grid";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { DirectionToggle } from "@/components/direction-toggle";
-import { FolderProvider, useFolder } from "@/components/folder-manager/context"; // Import FolderProvider and useFolder
+import { FolderProvider, useFolder ,DirectionProvider } from "@/components/folder-manager/context"; // Import FolderProvider and useFolder
 
 import {
   Pagination,
@@ -65,24 +65,26 @@ export default function Page() {
 
 
   return (
-    <FolderProvider>
-      <div className="flex h-screen bg-background">
-        <Sidebar />
-        <main className="flex-1 overflow-auto">
-          <div className="border-b bg-background">
-            <div className="flex h-[5rem] items-center justify-between px-4 ">
-              <div className="flex items-center gap-2">
-                <DirectionToggle />
-                <ThemeToggle />
+    <DirectionProvider>
+      <FolderProvider>
+        <div className="flex h-screen bg-background">
+          <Sidebar />
+          <main className="flex-1 ">
+            <div className="border-b bg-background">
+              <div className="flex h-[5rem] items-center justify-between px-4 ">
+                <div className="flex items-center gap-2">
+                  <DirectionToggle />
+                  <ThemeToggle />
+                </div>
+                <h1 className="text-xl font-semibold">Media Center</h1>
               </div>
-              <h1 className="text-xl font-semibold">Media Center</h1>
             </div>
-          </div>
 
-          <FileGridWrapper />
-        </main>
-      </div>
-    </FolderProvider>
+            <FileGridWrapper />
+          </main>
+        </div>
+      </FolderProvider>
+    </DirectionProvider>
   );
 }
 

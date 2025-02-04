@@ -5,12 +5,12 @@ import Link from "next/link";
 import { useState } from "react";
 import NexxFetch from "@/data/response-handling";
 import { FolderItem } from "@/types/type";
-import { useFolder } from "@/components/folder-manager/context"; // Import the useFolder hook
+import { useFolder } from "@/components/folder-manager/context"; 
 
 export function Sidebar() {
   const navigationItemsUrl = "https://cgl1106.cinnagen.com:9020/get-allFolder";
   const [expandedFolders, setExpandedFolders] = useState<Set<number>>(new Set());
-  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null); // Track selected folder
+  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null); 
 
   const { data, isLoading, error } = NexxFetch.useGetData<{ folders: FolderItem[] }>(
     navigationItemsUrl,
@@ -83,7 +83,7 @@ export function Sidebar() {
       const isSelected = folder.FolderID === selectedFolderId;
 
       return (
-        <div key={folder.FolderID} className="ml-4 nx-sideBar">
+        <div key={folder.FolderID} className="ml-4 nx-sideBar pr-4 rtl:pr-4">
           <div
             className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer ${
               isSelected ? "bg-muted" : "hover:bg-muted"
