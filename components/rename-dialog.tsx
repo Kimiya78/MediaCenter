@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -26,7 +25,6 @@ export function RenameDialog({ isOpen, onClose, fileName, onRename }: RenameDial
     e.preventDefault()
     if (newName && newName.trim() && newName !== fileName) {
       onRename(newName.trim())
-      onClose()
     }
   }
 
@@ -34,12 +32,7 @@ export function RenameDialog({ isOpen, onClose, fileName, onRename }: RenameDial
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>Rename File</DialogTitle>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle>Rename File</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Enter new name" autoFocus />

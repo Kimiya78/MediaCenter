@@ -6,6 +6,7 @@ import { MoreVertical } from "lucide-react"
 import { ShareMenu } from "../share-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
+
 interface FileCardProps {
   file: FileItem
 }
@@ -16,6 +17,7 @@ export function FileCard({ file }: FileCardProps) {
     if (text.length <= maxLength) return text
     return text.substring(0, maxLength) + "..."
   }
+  debugger
 
   return (
     <Card className="w-full nx-card">
@@ -40,6 +42,7 @@ export function FileCard({ file }: FileCardProps) {
           <ShareMenu
             fileId={file.id}
             fileName={file.name}
+            correlationGuid={file.correlationGuid}
             trigger={
               <Button variant="ghost" size="icon" className="h-8 w-8">
                 <MoreVertical className="h-4 w-4" />

@@ -22,14 +22,15 @@ import {
 import { useDirection } from "@/components/folder-manager/context"
 import ConfigURL  from "@/config"
 
-interface FileGridProps {
+interface FileListProps {
   initialFiles: FileItem[]
   selectedFolderId: string
 }
 
-export function FileGrid({ initialFiles, selectedFolderId }: FileGridProps) {
+export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
   const { dir } = useDirection()
   const [view, setView] = useState<"grid" | "list">("grid")
+  debugger
   const [files, setFiles] = useState<FileItem[]>([])
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: "name",
@@ -56,7 +57,9 @@ export function FileGrid({ initialFiles, selectedFolderId }: FileGridProps) {
         throw new Error(`Failed to fetch data. Status: ${response.status}`)
       }
       const apiData = await response.json()
+      debugger
       const transformedData: FileItem[] = apiData.items.map((item: any) => ({
+        correlationGuid: item.CorrelationGUID,
         id: item.FileGUID,
         name: item.FileName,
         type: item.FileExtension,
@@ -209,6 +212,7 @@ export function FileGrid({ initialFiles, selectedFolderId }: FileGridProps) {
           <ShareMenu
                       fileId={file.id}
                       fileName={file.name}
+                      correlationGuid={file.correlationGuid}
                       trigger={
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           <MoreVertical className="h-4 w-4" />

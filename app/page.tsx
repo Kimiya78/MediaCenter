@@ -1,7 +1,7 @@
 "use client"; 
 
 // import { Sidebar } from "@/components/layout/sidebar"
-// import { FileGrid } from "@/components/file-manager/file-grid"
+// import { FileList } from "@/components/file-manager/file-list"
 // import { ThemeToggle } from "@/components/theme-toggle"
 // import { DirectionToggle } from "@/components/direction-toggle"
 
@@ -32,8 +32,8 @@
 //           </div>
 //         </div>
 
-//         {/* <FileGrid files={files} paginationNumber={pageNumber} pageSize={pageSize} totalRecords={totalRecords} /> */}
-//         <FileGrid initialFiles={[]} />
+//         {/* <FileList files={files} paginationNumber={pageNumber} pageSize={pageSize} totalRecords={totalRecords} /> */}
+//         <FileList initialFiles={[]} />
 
 //       </main>
 //     </div>
@@ -43,7 +43,7 @@
 "use client";
 
 import { Sidebar } from "@/components/layout/sidebar";
-import { FileGrid } from "@/components/file-manager/file-grid";
+import { FileList } from "@/components/file-manager/file-list";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { DirectionToggle } from "@/components/direction-toggle";
 import { FolderProvider, useFolder ,DirectionProvider } from "@/components/folder-manager/context"; // Import FolderProvider and useFolder
@@ -80,7 +80,7 @@ export default function Page() {
               </div>
             </div>
 
-            <FileGridWrapper />
+            <FileListWrapper />
           </main>
         </div>
       </FolderProvider>
@@ -88,7 +88,7 @@ export default function Page() {
   );
 }
 
-function FileGridWrapper() {
+function FileListWrapper() {
   const { selectedFolderId } = useFolder(); // Get the selectedFolderId from the context
   const [files, setFiles] = useState<{ id: number; name: string; description: string }[]>([]);
 
@@ -104,6 +104,6 @@ function FileGridWrapper() {
 
 
   return (
-    <FileGrid initialFiles={files} selectedFolderId={selectedFolderId} />
+    <FileList initialFiles={files} selectedFolderId={selectedFolderId} />
   );
 }

@@ -1,6 +1,7 @@
 export type FilePermission = "owner" | "viewer" | "cooperative"
 
 export interface FileItem {
+  correlationGuid: string
   id: string
   name: string
   type: string

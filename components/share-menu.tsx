@@ -15,6 +15,8 @@ import { ShareDialog } from "./share-dialog";
 import { RenameDialog } from "./rename-dialog";
 import axios from "axios";
 import ConfigURL from "@/config";
+import { ViewerDialog } from "./ui/viewer-dialog"
+import { Eye } from 'lucide-react';
 
 interface ShareMenuProps {
   fileId: string; // FileGUID
@@ -151,7 +153,33 @@ export function ShareMenu({
     }
   };
 
-  // **Manage delete file**
+  const handleRename = async (newName: string) => {
+    try {
+      debugger
+      const response = await axios.put(
+        `${ConfigURL.baseUrl}/rename`,
+        {
+          CorrelationGUID: correlationGuid,
+          FileName: newName,
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      )
+
+      if (response.status === 200) {
+        toast.success("File renamed successfully.")
+        onRename?.(newName)
+      } else {
+        toast.error("Failed to rename the file.")
+      }
+    } catch (error) {
+      console.error("Error renaming file:", error)
+      toast.error("Error renaming file. Please try again.")
+    }
+  }
+
+
   // **Manage delete file**
   const handleDelete = async () => {
     try {
@@ -159,15 +187,14 @@ export function ShareMenu({
         `Are you sure you want to delete the file "${fileName}"?`
       );
       if (!confirmDelete) return;
-
+      debugger
       const deleteUrl = `${ConfigURL.baseUrl}/delete`;
 
-      // Updated headers to include 'Accept' header
       const response = await axios.delete(deleteUrl, {
         data: {
           CorrelationGUID: correlationGuid,
           FolderID: folderId,
-          PasswordHash: "",
+          PasswordHash: null,
         },
         headers: {
           "Content-Type": "application/json",  
@@ -215,9 +242,9 @@ export function ShareMenu({
         <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[200px]">
           <DropdownMenuItem onClick={handleShare}>
-            <Share2 className="mr-2 h-4 w-4" />
+            <Share2 className="mr-2 h-4 w-4  " />
             Share
-            <DropdownMenuShortcut>⌃⌥A</DropdownMenuShortcut>
+            {/* <DropdownMenuShortcut>⌃⌥A</DropdownMenuShortcut> */}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleDownload}>
             <Download className="mr-2 h-4 w-4" />
@@ -229,11 +256,11 @@ export function ShareMenu({
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
             <Edit2 className="mr-2 h-4 w-4" />
-            Edit
+            Rename
             <DropdownMenuShortcut> </DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleViewer}>
-            <Edit2 className="mr-2 h-4 w-4" />
+            <Eye className="mr-2 h-4 w-4" />
             Viewer
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onLockToggle}>
@@ -269,45 +296,15 @@ export function ShareMenu({
         onClose={() => setRenameDialogOpen(false)}
         fileName={fileName}
         onRename={(newName) => {
-          onRename?.(newName);
-          setRenameDialogOpen(false);
+          handleRename(newName)
+          setRenameDialogOpen(false)
         }}
       />
 
       {/* Viewer Popup */}
       {showViewerPopup && (
-        <div className="modal">
-          <div className="modal-content">
-            <h2>Viewers</h2>
-            <table className="table-auto w-full">
-              <thead>
-                <tr>
-                  <th className="border px-4 py-2">Person</th>
-                  <th className="border px-4 py-2">Downloaded At</th>
-                </tr>
-              </thead>
-              <tbody>
-                {viewerData.length === 0 ? (
-                  <tr>
-                    <td colSpan={2} className="border px-4 py-2 text-center">
-                      No viewers available.
-                    </td>
-                  </tr>
-                ) : (
-                  viewerData.map((viewer, index) => (
-                    <tr key={index}>
-                      <td className="border px-4 py-2">{viewer.CreatedBy}</td>
-                      <td className="border px-4 py-2">{viewer.DateTime}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-            <button onClick={() => setShowViewerPopup(false)} className="close-btn">
-              Close
-            </button>
-          </div>
-        </div>
+
+        <ViewerDialog isOpen={showViewerPopup} onClose={() => setShowViewerPopup(false)} viewerData={viewerData} />
       )}
     </>
   );
