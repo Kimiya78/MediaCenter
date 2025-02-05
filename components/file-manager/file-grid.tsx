@@ -20,6 +20,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { useDirection } from "@/components/folder-manager/context"
+import ConfigURL  from "@/config"
 
 interface FileGridProps {
   initialFiles: FileItem[]
@@ -49,7 +50,7 @@ export function FileGrid({ initialFiles, selectedFolderId }: FileGridProps) {
     setIsLoading(true)
     try {
       const response = await fetch(
-        `https://cgl1106.cinnagen.com:9020/fetch_media?page_number=${page}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${selectedFolderId}`,
+        `${ConfigURL.baseUrl}/fetch_media?page_number=${page}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${selectedFolderId}`,
       )
       if (!response.ok) {
         throw new Error(`Failed to fetch data. Status: ${response.status}`)

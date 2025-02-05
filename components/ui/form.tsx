@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import ConfigURL from "@/config";
 
 const UploadFile = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -47,7 +48,7 @@ const UploadFile = () => {
     debugger
 
     try {
-      const response = await fetch("https://cgl1106.cinnagen.com:9020/create", {
+      const response = await fetch(`${ConfigURL.baseUrl}/create`, {
         method: "POST",
         body: formData,
    /*     headers: {

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import ConfigURL from '@/config';
 
 interface UploadResponse {
   success: boolean;
@@ -13,7 +14,7 @@ interface ProgressCallback {
 export function useUploadFile() {
   const uploadFile = async (formData: FormData, onProgress?: ProgressCallback): Promise<UploadResponse> => {
     try {
-      const response = await axios.post('https://cgl1106.cinnagen.com:9020/create', formData, {
+      const response = await axios.post('${ConfigURL.baseUrl}/create', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

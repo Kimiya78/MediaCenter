@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import ConfigURL from '@/config';
 
 
 class AbortControllerManager {
@@ -39,7 +40,7 @@ class AbortControllerManager {
 
 // Create an Axios instance with a timeout configuration
 const axiosInstance: AxiosInstance = axios.create({
-  baseURL: 'https://cgl1106.cinnagen.com:9020', 
+  baseURL: '${ConfigURL.baseUrl}', 
   timeout: 20000, // 20 seconds timeout
   headers: {
     'Content-Type': 'application/json',

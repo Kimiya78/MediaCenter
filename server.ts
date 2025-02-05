@@ -22,6 +22,6 @@ handle(req, res);
 )
 .listen(port, (err: any) => {
 if (err) throw err;
-console.log('> Ready on https://cgl1106.cinnagen.com:8289');
+console.log('> Ready on https://localhost:8289');
 });
 });

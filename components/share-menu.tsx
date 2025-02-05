@@ -14,6 +14,7 @@ import {
 import { ShareDialog } from "./share-dialog";
 import { RenameDialog } from "./rename-dialog";
 import axios from "axios";
+import ConfigURL from "@/config";
 
 interface ShareMenuProps {
   fileId: string; // FileGUID
@@ -60,7 +61,7 @@ export function ShareMenu({
   // **Manage download file**
   const handleDownload = async () => {
     try {
-      const downloadUrl = "https://cgl1106.cinnagen.com:9020/downloading_file";
+      const downloadUrl = `${ConfigURL.baseUrl}/downloading_file`;
 
       const response = await axios.post(
         downloadUrl,
@@ -125,7 +126,7 @@ export function ShareMenu({
   // **Manage share file**
   const handleShare = async () => {
     try {
-      const shareUrl = `https://cgl1106.cinnagen.com:9020/shareFile/?FileGUID=${encodeURIComponent(
+      const shareUrl = `${ConfigURL.baseUrl}/shareFile/?FileGUID=${encodeURIComponent(
         fileId
       )}`;
       const shareMessage = `این فایل مورد نظر جهت دانلود میباشد: ${shareUrl}`;
@@ -159,7 +160,7 @@ export function ShareMenu({
       );
       if (!confirmDelete) return;
 
-      const deleteUrl = "https://cgl1106.cinnagen.com:9020/delete";
+      const deleteUrl = `${ConfigURL.baseUrl}/delete`;
 
       // Updated headers to include 'Accept' header
       const response = await axios.delete(deleteUrl, {
@@ -192,7 +193,7 @@ export function ShareMenu({
   const handleViewer = async () => {
     try {
       const response = await axios.post(
-        "https://cgl1106.cinnagen.com:9020/get_viewers_info",
+        `${ConfigURL.baseUrl}/get_viewers_info`,
         { FileGUID: fileId },
         { headers: { "Content-Type": "application/json" } }
       );

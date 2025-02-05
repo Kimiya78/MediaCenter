@@ -1,5 +1,7 @@
+import ConfigURL from "@/config";
+
 export const fetchMedia = async (page: number, pageSize: number, folderId: number | null) => {
-    const baseUrl = 'https://cgl1106.cinnagen.com:9020/fetch_media';
+    const baseUrl = `${ConfigURL.baseUrl}/fetch_media`;
     const params = new URLSearchParams({
       page_number: page.toString(),
       page_size: pageSize.toString(),

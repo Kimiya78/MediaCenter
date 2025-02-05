@@ -6,9 +6,10 @@ import { useState } from "react";
 import NexxFetch from "@/data/response-handling";
 import { FolderItem } from "@/types/type";
 import { useFolder } from "@/components/folder-manager/context"; 
+import ConfigURL from "@/config";
 
 export function Sidebar() {
-  const navigationItemsUrl = "https://cgl1106.cinnagen.com:9020/get-allFolder";
+  const navigationItemsUrl = `${ConfigURL.baseUrl}/get-allFolder`;
   const [expandedFolders, setExpandedFolders] = useState<Set<number>>(new Set());
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null); 
 
