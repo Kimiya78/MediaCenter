@@ -20,7 +20,7 @@ export function FileCard({ file }: FileCardProps) {
   debugger
 
   return (
-    <Card className="w-full nx-card">
+    <Card className="w-full h-full min-h-[150px] flex flex-col nx-card">
       <CardHeader className="p-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">

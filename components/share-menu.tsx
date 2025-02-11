@@ -128,23 +128,22 @@ export function ShareMenu({
   // **Manage share file**
   const handleShare = async () => {
     try {
-      const shareUrl = `${ConfigURL.baseUrl}/shareFile/?FileGUID=${encodeURIComponent(
-        fileId
-      )}`;
+      // ✅ New share URL using correlationGuid
+      const shareUrl = `https://localhost:8289/share?CorrelationGUID=${encodeURIComponent(correlationGuid)}`;
+      
       const shareMessage = `این فایل مورد نظر جهت دانلود میباشد: ${shareUrl}`;
-
+  
       const shareData = {
         title: `Check out this file: ${fileName}`,
         text: `File: ${fileName}\nDescription: ${fileDescription}\nUploaded By: ${uploadedBy}\nUploaded On: ${uploadedOn}\n\n${shareMessage}`,
         url: shareUrl,
       };
-
+  
       if (navigator.share) {
         await navigator.share(shareData);
         toast.success("File shared successfully!");
       } else {
-        const clipboardText = `File: ${fileName}\nDescription: ${fileDescription}\n${shareMessage}`;
-        await navigator.clipboard.writeText(clipboardText);
+        await navigator.clipboard.writeText(shareMessage);
         toast.success("File link copied to clipboard!");
       }
     } catch (error) {
@@ -152,7 +151,9 @@ export function ShareMenu({
       toast.error("Failed to share the file.");
     }
   };
+  
 
+  // **Manage rename file**
   const handleRename = async (newName: string) => {
     try {
       debugger

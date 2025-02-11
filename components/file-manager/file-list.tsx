@@ -283,7 +283,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
       {/* Scrollable Content Area */}
       <div className="flex-1 overflow-auto p-4">
         {view === "grid" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 lg:grid-cols-3 gap-4 ">
             {sortedFiles.map((file) => (
               <div key={file.id} className={`${newFileId === file.id ? "animate-new-file" : ""}`}>
                 <FileCard file={file} actions={<FileActions file={file} />} />
