@@ -5,6 +5,8 @@ import { DirectionToggle } from "@/components/direction-toggle";
 import { DirectionProvider } from "@/components/folder-manager/context";
 import { SharingForm } from "@/components/sharing-dialog";
 import { useSearchParams } from "next/navigation";
+import Breadcrumbs from "@/components/breadCrumbs";
+
 
 
 export default function SharePage() {
@@ -24,6 +26,10 @@ export default function SharePage() {
               </div>
               <h1 className="text-xl font-semibold">Media Center</h1>
             </div>
+{/* 
+            <div className="flex h-[3rem] items-center justify-between px-4 ">
+                  <Breadcrumbs />
+            </div> */}
           </div>
 
           {/* Main content area */}

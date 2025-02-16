@@ -17,10 +17,10 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { useState } from "react";
+import Breadcrumbs from "@/components/breadCrumbs";
+
 
 export default function Page() {
-
-
 
 
   return (
@@ -36,6 +36,9 @@ export default function Page() {
                   <ThemeToggle />
                 </div>
                 <h1 className="text-xl font-semibold">Media Center</h1>
+              </div>
+              <div className="flex h-[3rem] items-center justify-between px-4 ">
+                  <Breadcrumbs />
               </div>
             </div>
 

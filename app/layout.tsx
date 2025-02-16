@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 /*import {CookieManager} from "@/scr/CookieManager.js"*/
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 const inter = Inter({ subsets: ["latin"] })
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 
 export default function RootLayout({

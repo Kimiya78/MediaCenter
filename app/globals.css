@@ -180,3 +180,22 @@
   .animate-new-file {
     animation: newFileAnimation 2s ease-out;
   }
+
+
+
+  .breadcrumb ul {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 15px;
+    text-decoration: underline;
+  }
+  
+  .breadcrumb a {
+    color: #0070f3;
+    text-decoration: none;
+  }
+  
+  .breadcrumb a:hover {
+    text-decoration: underline;
+  }
+  

@@ -22,7 +22,7 @@ export function Sidebar() {
     ["Folders"]
   );
 
-  const { setSelectedFolderId: updateContextFolder } = useFolder();
+  const { setSelectedFolderId: updateContextFolder, setSelectedFoldersArray } = useFolder();
 
   if (isLoading) return <p>Loading folders...</p>;
   if (error) return <p>Error loading folders: {error.message}</p>;
@@ -44,6 +44,7 @@ export function Sidebar() {
     }
     return acc;
   }, {} as { [key: number]: FolderItem & { permissions: (number | null)[] } });
+
 
   const buildFolderTree = (folders: typeof uniqueFolders) => {
     const tree: (FolderItem & { children: any[] })[] = [];
@@ -67,6 +68,7 @@ export function Sidebar() {
     return tree;
   };
 
+
   const toggleFolder = (folderId: number) => {
     setExpandedFolders((prev) => {
       const next = new Set(prev);
@@ -79,12 +81,32 @@ export function Sidebar() {
     });
   };
 
+
   const handleRightClick = (event: React.MouseEvent, folderId: number, ParentFolderID: number , folderName : string) => {
     event.preventDefault();
     setContextMenu({ x: event.pageX, y: event.pageY, folderId, ParentFolderID , folderName });
   };
 
+
   const folderTree = buildFolderTree(uniqueFolders);
+
+  // Function to get the selected folder and its parents
+  const getParentFolders = (folderId: number, folders: typeof uniqueFolders): { id: number; name: string }[] => {
+    const selectedFolders: { id: number; name: string }[] = [];
+    let currentFolderId = folderId;
+
+    while (currentFolderId) {
+      const folder = folders[currentFolderId];
+      if (folder) {
+        selectedFolders.unshift({ id: folder.FolderID, name: folder.FolderName });
+        currentFolderId = folder.ParentFolderID || null;
+      } else {
+        break;
+      }
+    }
+
+    return selectedFolders;
+  };
 
   const renderFolderTree = (folders: (FolderItem & { children: any[] })[]) => {
     return folders.map((folder) => {
@@ -101,6 +123,8 @@ export function Sidebar() {
             onClick={() => {
               setSelectedFolderId(folder.FolderID);
               updateContextFolder(folder.FolderID);
+              const parentFolders = getParentFolders(folder.FolderID, uniqueFolders);
+              setSelectedFoldersArray(parentFolders); // Update selectedFoldersArray with parents
             }}
             onContextMenu={(e) => handleRightClick(e, folder.FolderID, folder.ParentFolderID , folder.FolderName)}
           >
@@ -125,6 +149,8 @@ export function Sidebar() {
       );
     });
   };
+
+  
 
   return (
     <div className="w-64 h-screen border-r bg-background text-foreground">

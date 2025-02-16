@@ -100,7 +100,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
     return nameMatch && typeMap[fileType]?.includes(file.type.toLowerCase())
   })
 
-  const sortedFiles = [...files].sort((a, b) => {
+  const sortedFiles = [...filteredFiles].sort((a, b) => {
     const aValue = a[sortConfig.key]
     const bValue = b[sortConfig.key]
 
@@ -221,7 +221,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
   }
 
   const renderTableBody = () => {
-    return filteredFiles.map((file) => (
+    return sortedFiles.map((file) => (
       <tr key={file.id} className="border-b hover:bg-muted/50">
         {["name", "type", "size", "createdBy", "createdDate"].map((field) => (
           <td key={field} className={`px-4 py-3 ${dir === "rtl" ? "text-right" : "text-left"}`}>
@@ -229,17 +229,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
           </td>
         ))}
         <td className="px-4 py-3 text-right">
-          {/* <ShareMenu
-                      fileId={file.id}
-                      fileName={file.name}
-                      correlationGuid={file.correlationGuid}
-                      trigger={
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      }
-                      isLocked={file.isLocked}
-                    /> */}
+
             <ShareMenu
               fileId={file.id}
               fileName={file.name} // ✅ This updates when state changes
@@ -319,14 +309,14 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
       <div className="flex-1 overflow-auto p-4">
         {view === "grid" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 lg:grid-cols-3 gap-4 ">
-            {filteredFiles.map((file) => (
+            {sortedFiles.map((file) => (
               <div key={file.id} className={`${newFileId === file.id ? "animate-new-file" : ""}`}>
                 <FileCard file={file} actions={<FileActions file={file} />} />
               </div>
             ))}
           </div>
         ) : (
-          <div className="rounded-lg border bg-card">
+          <div className="rounded-lg border bg-card ">
             <table className="min-w-full rounded-lg overflow-hidden">
               <thead>{renderTableHeader()}</thead>
               <tbody>{renderTableBody()}</tbody>
