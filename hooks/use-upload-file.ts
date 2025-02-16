@@ -14,7 +14,7 @@ interface ProgressCallback {
 export function useUploadFile() {
   const uploadFile = async (formData: FormData, onProgress?: ProgressCallback): Promise<UploadResponse> => {
     try {
-      const response = await axios.post('${ConfigURL.baseUrl}/create', formData, {
+      const response = await axios.post(`${ConfigURL.baseUrl}/create`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

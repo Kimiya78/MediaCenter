@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useUploadFile } from "@/hooks/use-upload-file";
 import { useFolder } from "@/components/folder-manager/context";
 
+
 interface UploadDialogProps {
   isOpen: boolean;
   onClose: () => void;

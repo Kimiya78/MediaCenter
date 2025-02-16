@@ -155,7 +155,6 @@
   .direction-transition {
     transition: transform 0.2s ease-in-out;
   }
-
   @keyframes newFileAnimation {
     0% {
       background-color: rgba(147, 197, 253, 0.5); /* Light blue background */
@@ -178,7 +177,6 @@
       opacity: 1;
     }
   }
-
   .animate-new-file {
     animation: newFileAnimation 2s ease-out;
   }

@@ -22,6 +22,7 @@ import {
 import { useDirection } from "@/components/folder-manager/context"
 import ConfigURL  from "@/config"
 
+
 interface FileListProps {
   initialFiles: FileItem[]
   selectedFolderId: string
@@ -30,7 +31,7 @@ interface FileListProps {
 export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
   const { dir } = useDirection()
   const [view, setView] = useState<"grid" | "list">("grid")
-  debugger
+  // debugger
   const [files, setFiles] = useState<FileItem[]>([])
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: "name",
@@ -57,7 +58,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
         throw new Error(`Failed to fetch data. Status: ${response.status}`)
       }
       const apiData = await response.json()
-      debugger
+      // debugger
       const transformedData: FileItem[] = apiData.items.map((item: any) => ({
         correlationGuid: item.CorrelationGUID,
         id: item.FileGUID,
@@ -152,8 +153,27 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
     }, 2000)
   }
 
+  const handleRenameFile = (fileId: string, newName: string) => {
+    setFiles((prevFiles) => {
+      const updatedFiles = prevFiles.map((file) =>
+        file.id === fileId ? { ...file, name: newName } : file
+      );
+  
+      return [...updatedFiles]; // ✅ Force React to detect the change
+    });
+  
+    // Apply animation to renamed file like an upload
+    setNewFileId(fileId);  
+    setTimeout(() => {
+      setNewFileId(null);
+    }, 2000);
+  };
+  
+  
+  
+
   const FileActions = ({ file }: { file: FileItem }) => {
-    debugger
+    // debugger
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -201,7 +221,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
   }
 
   const renderTableBody = () => {
-    return sortedFiles.map((file) => (
+    return filteredFiles.map((file) => (
       <tr key={file.id} className="border-b hover:bg-muted/50">
         {["name", "type", "size", "createdBy", "createdDate"].map((field) => (
           <td key={field} className={`px-4 py-3 ${dir === "rtl" ? "text-right" : "text-left"}`}>
@@ -209,7 +229,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
           </td>
         ))}
         <td className="px-4 py-3 text-right">
-          <ShareMenu
+          {/* <ShareMenu
                       fileId={file.id}
                       fileName={file.name}
                       correlationGuid={file.correlationGuid}
@@ -219,7 +239,22 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
                         </Button>
                       }
                       isLocked={file.isLocked}
-                    />
+                    /> */}
+            <ShareMenu
+              fileId={file.id}
+              fileName={file.name} // ✅ This updates when state changes
+              fileDescription={file.description}
+              fileSize={file.size.toString()}
+              uploadedBy={file.createdBy}
+              uploadedOn={file.createdDate}
+              attachmentUrlGuid={file.correlationGuid}
+              correlationGuid={file.correlationGuid}
+              folderId={selectedFolderId}
+              requiresPassword={false}
+              trigger={<MoreVertical className="h-4 w-4" />}
+              isLocked={file.isLocked}
+              onRename={handleRenameFile} // ✅ Passes update function correctly
+            />
         </td>
       </tr>
     ))
@@ -284,7 +319,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
       <div className="flex-1 overflow-auto p-4">
         {view === "grid" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 lg:grid-cols-3 gap-4 ">
-            {sortedFiles.map((file) => (
+            {filteredFiles.map((file) => (
               <div key={file.id} className={`${newFileId === file.id ? "animate-new-file" : ""}`}>
                 <FileCard file={file} actions={<FileActions file={file} />} />
               </div>

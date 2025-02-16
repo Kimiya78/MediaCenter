@@ -54,7 +54,7 @@ function FileListWrapper() {
   // Function to handle new file uploads
   const handleUpload = (file: File, description: string) => {
     const newFile = {
-      id: Date.now(), // Use a unique ID (e.g., timestamp)
+      id: Date.now(), 
       name: file.name,
       description,
     };

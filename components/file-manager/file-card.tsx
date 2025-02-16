@@ -17,10 +17,10 @@ export function FileCard({ file }: FileCardProps) {
     if (text.length <= maxLength) return text
     return text.substring(0, maxLength) + "..."
   }
-  debugger
+  // debugger
 
   return (
-    <Card className="w-full h-full min-h-[150px] flex flex-col nx-card">
+    <Card className="w-full h-full min-h-[200px] flex flex-col nx-card">
       <CardHeader className="p-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">

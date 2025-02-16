@@ -1,17 +1,21 @@
 "use client";
 
-import { ChevronDown, ChevronRight, FolderClosed } from "lucide-react";
+import { ChevronDown, ChevronRight, FolderClosed, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import NexxFetch from "@/data/response-handling";
 import { FolderItem } from "@/types/type";
-import { useFolder } from "@/components/folder-manager/context"; 
+import { useFolder } from "@/components/folder-manager/context";
 import ConfigURL from "@/config";
+import FolderContextMenu from "@/components/folder-manager/folder-contextMenu";
 
 export function Sidebar() {
   const navigationItemsUrl = `${ConfigURL.baseUrl}/get-allFolder`;
   const [expandedFolders, setExpandedFolders] = useState<Set<number>>(new Set());
-  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null); 
+  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; folderId: number | null, ParentFolderID: number | null , folderName : string} | null>(null);
+  const [announcement, setAnnouncement] = useState<{ oldName: string; newName: string } | null>(null);
+  const [folderList, setFolderList] = useState<FolderItem[]>([]); // Local state for folder list
 
   const { data, isLoading, error } = NexxFetch.useGetData<{ folders: FolderItem[] }>(
     navigationItemsUrl,
@@ -23,8 +27,10 @@ export function Sidebar() {
   if (isLoading) return <p>Loading folders...</p>;
   if (error) return <p>Error loading folders: {error.message}</p>;
 
-  const folderList = data?.folders || [];
-  if (!Array.isArray(folderList)) return <p>Error: Fetched data is not an array.</p>;
+  // Initialize folderList with data if it's not already set
+  if (data?.folders && folderList.length === 0) {
+    setFolderList(data.folders);
+  }
 
   // Deduplicate folders by FolderID while preserving permissions
   const uniqueFolders = folderList.reduce((acc, folder) => {
@@ -43,12 +49,10 @@ export function Sidebar() {
     const tree: (FolderItem & { children: any[] })[] = [];
     const folderMap: { [key: number]: FolderItem & { children: any[] } } = {};
 
-    // Initialize the map with all folders
     Object.values(folders).forEach((folder) => {
       folderMap[folder.FolderID] = { ...folder, children: [] };
     });
 
-    // Build the tree structure
     Object.values(folders).forEach((folder) => {
       if (folder.ParentFolderID) {
         const parent = folderMap[folder.ParentFolderID];
@@ -75,6 +79,11 @@ export function Sidebar() {
     });
   };
 
+  const handleRightClick = (event: React.MouseEvent, folderId: number, ParentFolderID: number , folderName : string) => {
+    event.preventDefault();
+    setContextMenu({ x: event.pageX, y: event.pageY, folderId, ParentFolderID , folderName });
+  };
+
   const folderTree = buildFolderTree(uniqueFolders);
 
   const renderFolderTree = (folders: (FolderItem & { children: any[] })[]) => {
@@ -93,6 +102,7 @@ export function Sidebar() {
               setSelectedFolderId(folder.FolderID);
               updateContextFolder(folder.FolderID);
             }}
+            onContextMenu={(e) => handleRightClick(e, folder.FolderID, folder.ParentFolderID , folder.FolderName)}
           >
             <div className="flex items-center gap-2" onClick={() => hasChildren && toggleFolder(folder.FolderID)}>
               {hasChildren && (
@@ -122,6 +132,47 @@ export function Sidebar() {
         <h1 className="text-xl font-bold mb-8">Folders</h1>
         <nav className="space-y-2">{renderFolderTree(folderTree)}</nav>
       </div>
+
+      {contextMenu && (
+        <FolderContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          folderId={contextMenu.folderId!}
+          parentFolderId={contextMenu.ParentFolderID}
+          onClose={() => setContextMenu(null)}
+          onFolderUpdate={(newName) => {
+            // Update the folder name in the local state
+            setFolderList((prevFolders) =>
+              prevFolders.map((folder) =>
+                folder.FolderID === contextMenu.folderId ? { ...folder, FolderName: newName } : folder
+              )
+            );
+            setAnnouncement({ oldName: contextMenu.folderName , newName });
+          }}
+          onFolderDelete={(folderId) => {
+            // Remove the folder from the local state
+            setFolderList((prevFolders) => prevFolders.filter((folder) => folder.FolderID !== folderId));
+            setAnnouncement(null); // Optionally, you can set an announcement for deletion
+          }}
+          setAnnouncement={setAnnouncement}
+          folderName={folderList.find(folder => folder.FolderID === contextMenu.folderId)?.FolderName || ""}
+        />
+      )}
+
+      {/* Announcement Section */}
+      {announcement && (
+        <div className="fixed bottom-4 left-4 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 z-50">
+          <span>
+            "{announcement.oldName}" renamed to "{announcement.newName}"
+          </span>
+          <button
+            onClick={() => setAnnouncement(null)}
+            className="hover:bg-gray-800 p-1 rounded"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

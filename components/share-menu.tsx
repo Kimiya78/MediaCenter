@@ -156,7 +156,6 @@ export function ShareMenu({
   // **Manage rename file**
   const handleRename = async (newName: string) => {
     try {
-      debugger
       const response = await axios.put(
         `${ConfigURL.baseUrl}/rename`,
         {
@@ -165,20 +164,24 @@ export function ShareMenu({
         },
         {
           headers: { "Content-Type": "application/json" },
-        },
-      )
-
+        }
+      );
+  
       if (response.status === 200) {
-        toast.success("File renamed successfully.")
-        onRename?.(newName)
+        toast.success("File renamed successfully.");
+  
+        if (onRename) {
+          onRename(fileId, newName); // 🔥 Immediately tell parent to update UI
+        }
       } else {
-        toast.error("Failed to rename the file.")
+        toast.error("Failed to rename the file.");
       }
     } catch (error) {
-      console.error("Error renaming file:", error)
-      toast.error("Error renaming file. Please try again.")
+      console.error("Error renaming file:", error);
+      toast.error("Error renaming file. Please try again.");
     }
-  }
+  };
+  
 
 
   // **Manage delete file**
@@ -295,7 +298,8 @@ export function ShareMenu({
       <RenameDialog
         isOpen={renameDialogOpen}
         onClose={() => setRenameDialogOpen(false)}
-        fileName={fileName}
+        objectName={fileName}
+        objectType="File"
         onRename={(newName) => {
           handleRename(newName)
           setRenameDialogOpen(false)

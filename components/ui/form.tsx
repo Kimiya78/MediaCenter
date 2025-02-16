@@ -51,9 +51,9 @@ const UploadFile = () => {
       const response = await fetch(`${ConfigURL.baseUrl}/create`, {
         method: "POST",
         body: formData,
-   /*     headers: {
+        headers: {
           'Content-Type': 'application/json',
-        },*/
+        },
       });
 
       if (response.ok) {
