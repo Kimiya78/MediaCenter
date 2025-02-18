@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CirclePlus, Download, Edit2 } from "lucide-react";
 import ConfigURL from "@/config";
-import AddLinksDialog from "@/components/addLinks-dialog"; 
+import {AddLinksDialog} from "@/components/addLinks-dialog"; 
 
 interface Link {
   AttachmentURLGUID: string;
@@ -89,9 +89,7 @@ export default function LinksDialog({ isOpen, onClose, fileGUID }: LinksDialogPr
           <DialogTitle>Links</DialogTitle>
         </DialogHeader>
         <div className="max-h-[400px] overflow-y-auto">
-          <Button onClick={handleAddLink} variant="outlined" className="mb-4">
-            <CirclePlus className="mr-2" /> Add Link
-          </Button>
+          <AddLinksDialog />
 
           <Table>
             <TableHeader>

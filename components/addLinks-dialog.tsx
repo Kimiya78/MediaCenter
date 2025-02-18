@@ -1,71 +1,123 @@
-"use client";
-
-import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogActions } from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import ConfigURL from "@/config";
 
-interface AddLinksDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: { expiresOn: string; password: string; isAnonymous: boolean }) => void;
-}
 
-const AddLinksDialog: React.FC<AddLinksDialogProps> = ({ isOpen, onClose, onSubmit }) => {
+export function AddLinksDialog({ correlationGuid }) {
   const [expiresOn, setExpiresOn] = useState("");
   const [password, setPassword] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [fetchedData, setFetchedData] = useState(null);
+  debugger
+  useEffect(() => {
+    async function fetchData() {
 
-  const handleSubmit = () => {
-    onSubmit({ expiresOn, password, isAnonymous });
-    onClose(); // Close dialog after submission
+      try {
+        const response = await fetch(`${ConfigURL.baseUrl}/get_data`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ correlationGuid }),
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch data");
+        const data = await response.json();
+        setFetchedData(data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    }
+
+    if (correlationGuid) fetchData();
+  }, [correlationGuid]);
+
+  const handleCheckboxChange = (checked) => {
+    setIsAnonymous(checked);
+    if (checked) setPassword("");
+  };
+
+  const handleSubmit = async () => {
+    const payload = {
+      FileGUID: correlationGuid, 
+      ExpiresOnDate: expiresOn || null, 
+      PasswordHash: isAnonymous ? null : password, 
+      IsAnonymous: isAnonymous, 
+      Inactive: false 
+    };
+
+    try {
+      const response = await fetch(`${ConfigURL.baseUrl}/create_url`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error("Failed to create URL");
+      console.log("URL created successfully!");
+      setTimeout(() => window.location.reload(), 500);
+    } catch (error) {
+      console.error("Error submitting data:", error);
+    }
   };
 
   return (
-    <Dialog open={isOpen} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogHeader>
-        <DialogTitle className="text-lg font-semibold text-center">Attachment Link</DialogTitle>
-      </DialogHeader>
-      <DialogContent className="space-y-4">
-        {/* Expires On Date */}
-        <div>
-          <Label className="font-medium">Expires On Date:</Label>
-          <Input
-            type="date"
-            value={expiresOn}
-            onChange={(e) => setExpiresOn(e.target.value)}
-            className="mt-1"
-          />
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">+ Add Link</Button>
+      </SheetTrigger>
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>Attachment Link</SheetTitle>
+        </SheetHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="expiresOn">Expires On Date:</Label>
+            <Input
+              type="date"
+              id="expiresOn"
+              value={expiresOn}
+              onChange={(e) => setExpiresOn(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="password">Password:</Label>
+            <Input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isAnonymous}
+              className={isAnonymous ? "opacity-50 cursor-not-allowed" : ""}
+            />
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="isAnonymous"
+              checked={isAnonymous}
+              onCheckedChange={handleCheckboxChange}
+            />
+            <Label htmlFor="isAnonymous">Is Anonymous?</Label>
+          </div>
         </div>
-
-        {/* Password */}
-        <div>
-          <Label className="font-medium">Password:</Label>
-          <Input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="mt-1"
-            placeholder="Enter password"
-          />
-        </div>
-
-        {/* Is Anonymous */}
-        <div className="flex items-center space-x-2">
-          <Checkbox checked={isAnonymous} onCheckedChange={setIsAnonymous} />
-          <Label className="font-medium">Is Anonymous</Label>
-        </div>
-      </DialogContent>
-
-      <DialogFooter className="flex justify-center mt-4">
-        <Button onClick={handleSubmit} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-          Submit
-        </Button>
-      </DialogFooter>
-    </Dialog>
+        <SheetFooter>
+          <SheetClose asChild>
+            <Button type="submit" onClick={handleSubmit}>
+              Submit
+            </Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
-};
-
-export default AddLinksDialog;
+}

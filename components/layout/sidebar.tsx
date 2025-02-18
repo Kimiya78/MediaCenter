@@ -118,9 +118,9 @@ export function Sidebar() {
       return (
         <div key={folder.FolderID} className="ml-4 nx-sideBar pr-4 rtl:pr-4 ">
           <div
-              className={`flex items-center gap-2 px-2 py-1 rounded-md cursor-pointer 
-                transition-all duration-200
-                ${isSelected ? "bg-muted min-w-[200px] w-full" : ""}
+              className={`flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer 
+                transition-all 
+                ${isSelected ? "bg-muted w-full" : ""}
               `}
               style={{
                 width: "100%", 
