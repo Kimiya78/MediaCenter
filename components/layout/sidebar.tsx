@@ -8,6 +8,7 @@ import { FolderItem } from "@/types/type";
 import { useFolder } from "@/components/folder-manager/context";
 import ConfigURL from "@/config";
 import FolderContextMenu from "@/components/folder-manager/folder-contextMenu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export function Sidebar() {
   const navigationItemsUrl = `${ConfigURL.baseUrl}/get-allFolder`;
@@ -104,7 +105,7 @@ export function Sidebar() {
         break;
       }
     }
-
+                                                          
     return selectedFolders;
   };
 
@@ -115,19 +116,23 @@ export function Sidebar() {
       const isSelected = folder.FolderID === selectedFolderId;
 
       return (
-        <div key={folder.FolderID} className="ml-4 nx-sideBar pr-4 rtl:pr-4">
+        <div key={folder.FolderID} className="ml-4 nx-sideBar pr-4 rtl:pr-4 ">
           <div
-            className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer ${
-              isSelected ? "bg-muted" : "hover:bg-muted"
-            }`}
-            onClick={() => {
-              setSelectedFolderId(folder.FolderID);
-              updateContextFolder(folder.FolderID);
-              const parentFolders = getParentFolders(folder.FolderID, uniqueFolders);
-              setSelectedFoldersArray(parentFolders); // Update selectedFoldersArray with parents
-            }}
-            onContextMenu={(e) => handleRightClick(e, folder.FolderID, folder.ParentFolderID , folder.FolderName)}
-          >
+              className={`flex items-center gap-2 px-2 py-1 rounded-md cursor-pointer 
+                transition-all duration-200
+                ${isSelected ? "bg-muted min-w-[200px] w-full" : ""}
+              `}
+              style={{
+                width: "100%", 
+              }}
+              onClick={() => {
+                setSelectedFolderId(folder.FolderID);
+                updateContextFolder(folder.FolderID);
+                const parentFolders = getParentFolders(folder.FolderID, uniqueFolders);
+                setSelectedFoldersArray(parentFolders);
+              }}
+              onContextMenu={(e) => handleRightClick(e, folder.FolderID, folder.ParentFolderID, folder.FolderName)}
+            >
             <div className="flex items-center gap-2" onClick={() => hasChildren && toggleFolder(folder.FolderID)}>
               {hasChildren && (
                 <div className="w-4 h-4">
@@ -139,9 +144,27 @@ export function Sidebar() {
                 </div>
               )}
               <FolderClosed className="w-4 h-4" />
-              <Link href="#">
+              {/* <Link href="#">
                 <span className={folder.PasswordRequired ? "text-red-500" : ""}>{folder.FolderName}</span>
-              </Link>
+              </Link> */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <h3
+                      className={`font-medium text-sm truncate max-w-[70px] ${
+                        folder.PasswordRequired ? "text-red-500" : ""
+                      }`}
+                    >
+                      {folder.FolderName}
+                    </h3>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" align="start" className="max-w-[100px]">
+                    <p className="text-sm">{folder.FolderName}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+
             </div>
           </div>
           {hasChildren && isExpanded && <div className="ml-4">{renderFolderTree(folder.children)}</div>}

@@ -32,7 +32,7 @@ export function ShareDialog({ isOpen, onClose, onShare }: ShareDialogProps) {
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose} >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Share File</DialogTitle>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Copy, Share2, Download, Lock, Unlock, Trash, Edit2 } from "lucide-react";
+import { Copy, Share2, Download, Lock, Unlock, Trash, Edit2 , Eye , Key , Link } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,25 +16,26 @@ import { RenameDialog } from "./rename-dialog";
 import axios from "axios";
 import ConfigURL from "@/config";
 import { ViewerDialog } from "./ui/viewer-dialog"
-import { Eye } from 'lucide-react';
+import { PasswordDialog } from "@/components/password-dialog";
+import LinksDialog  from "@/components/links-dialog";
 
 interface ShareMenuProps {
-  fileId: string; // FileGUID
+  fileId: string;
   fileName: string;
   fileDescription: string;
   fileSize: string;
   uploadedBy: string;
   uploadedOn: string;
-  attachmentUrlGuid: string; // AttachmentURLGUID
-  correlationGuid: string; // CorrelationGUID
-  folderId: string; // FolderID
-  requiresPassword: boolean; // added: Does the file require a password?
+  attachmentUrlGuid: string; 
+  correlationGuid: string; 
+  folderId: string; 
+  requiresPassword: boolean; 
   trigger: React.ReactNode;
   isLocked?: boolean;
   onLockToggle?: () => void;
   onDelete?: () => void;
   onRename?: (newName: string) => void;
-  onFileRemove?: (correlationGuid: string) => void; // For removing file from UI
+  onFileRemove?: (correlationGuid: string) => void; 
 }
 
 export function ShareMenu({
@@ -60,7 +61,30 @@ export function ShareMenu({
   const [viewerData, setViewerData] = useState<any[]>([]);
   const [showViewerPopup, setShowViewerPopup] = useState(false);
 
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const correctPassword = "";
+
+  const handlePasswordSubmit = (enteredPass: string) => {
+    console.log("Password entered:", enteredPass);
+    // Perform any necessary action after password validation
+  };
+
+
+  const [isLinksDialogOpen, setLinksDialogOpen] = useState(false);
+  const [linksData, setLinksData] = useState<any[]>([]);
+  
+
+  const handleLinksClick = async () => {
+    setLinksDialogOpen(true);
+  };
+
+  const closeLinksDialog = () => {
+    setLinksDialogOpen(false);
+  };
+
+
   // **Manage download file**
+  
   const handleDownload = async () => {
     try {
       const downloadUrl = `${ConfigURL.baseUrl}/downloading_file`;
@@ -244,30 +268,34 @@ export function ShareMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[200px]">
-          <DropdownMenuItem onClick={handleShare}>
+        <DropdownMenuContent align="end" className="w-[200px] cursor-pointer">
+          <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
             <Share2 className="mr-2 h-4 w-4  " />
             Share
             {/* <DropdownMenuShortcut>⌃⌥A</DropdownMenuShortcut> */}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleDownload}>
+          <DropdownMenuItem onClick={handleDownload} className="cursor-pointer">
             <Download className="mr-2 h-4 w-4" />
             Download
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+
+          <DropdownMenuItem onClick={handleDelete} className="text-destructive cursor-pointer">
             <Trash className="mr-2 h-4 w-4" />
             Delete
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
+
+          <DropdownMenuItem onClick={() => setRenameDialogOpen(true)} className="cursor-pointer">
             <Edit2 className="mr-2 h-4 w-4" />
             Rename
             <DropdownMenuShortcut> </DropdownMenuShortcut>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleViewer}>
+
+          <DropdownMenuItem onClick={handleViewer} className="cursor-pointer">
             <Eye className="mr-2 h-4 w-4" />
             Viewer
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onLockToggle}>
+
+          <DropdownMenuItem onClick={onLockToggle} className="cursor-pointer">
             {requiresPassword ? (
               <>
                 <Lock className="mr-2 h-4 w-4 text-red-500" />
@@ -280,6 +308,17 @@ export function ShareMenu({
               </>
             )}
           </DropdownMenuItem>
+
+          <DropdownMenuItem onClick={handlePasswordSubmit} className="cursor-pointer">
+            <Key className="mr-2 h-4 w-4" />
+            <button onClick={() => setIsDialogOpen(true)}>       pass      </button>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem onClick={handleLinksClick} className="cursor-pointer">
+            <Link className="mr-2 h-4 w-4" />
+            Links
+          </DropdownMenuItem>
+
           <DropdownMenuSeparator />
         </DropdownMenuContent>
       </DropdownMenu>
@@ -306,11 +345,25 @@ export function ShareMenu({
         }}
       />
 
+      <PasswordDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        objectPass={correctPassword}
+        onPasswordSubmit={handlePasswordSubmit}
+      /> 
+
+
       {/* Viewer Popup */}
       {showViewerPopup && (
 
         <ViewerDialog isOpen={showViewerPopup} onClose={() => setShowViewerPopup(false)} viewerData={viewerData} />
       )}
-    </>
+      
+      {/* Links Dialog */}
+      {isLinksDialogOpen && (
+        <LinksDialog isOpen={isLinksDialogOpen} onClose={closeLinksDialog} fileGUID={correlationGuid} />
+      )}
+
+    </> 
   );
 }
