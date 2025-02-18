@@ -13,17 +13,18 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import ConfigURL from "@/config";
+import { Edit2 } from "lucide-react";
 
 
-export function UpsertLinksDialog({ correlationGuid }) {
+export function UpsertLinksDialog({ correlationGuid, mode }) {
   const [expiresOn, setExpiresOn] = useState("");
   const [password, setPassword] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [disable, setDisable] = useState(false);
   const [fetchedData, setFetchedData] = useState(null);
-  debugger
+
   useEffect(() => {
     async function fetchData() {
-
       try {
         const response = await fetch(`${ConfigURL.baseUrl}/get_data`, {
           method: "POST",
@@ -47,13 +48,15 @@ export function UpsertLinksDialog({ correlationGuid }) {
     if (checked) setPassword("");
   };
 
+//   const handleUpdateURL = () {} 
+
   const handleSubmit = async () => {
     const payload = {
-      FileGUID: correlationGuid, 
-      ExpiresOnDate: expiresOn || null, 
-      PasswordHash: isAnonymous ? null : password, 
-      IsAnonymous: isAnonymous, 
-      Inactive: false 
+      FileGUID: correlationGuid,
+      ExpiresOnDate: expiresOn || null,
+      PasswordHash: isAnonymous ? null : password,
+      IsAnonymous: isAnonymous,
+      Inactive: disable,
     };
 
     try {
@@ -73,9 +76,20 @@ export function UpsertLinksDialog({ correlationGuid }) {
 
   return (
     <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="outline">+ Add Link</Button>
-      </SheetTrigger>
+        {mode === 'c' && (
+            <SheetTrigger asChild>
+                <Button variant="outline">+ Add Link</Button>
+            </SheetTrigger>
+            )}
+            
+        {mode ==='u' && (
+            <SheetTrigger asChild>
+                <Button variant="ghost">
+                    <Edit2 className="h-4 w-4" />
+                </Button>
+            </SheetTrigger>
+
+)} 
       <SheetContent>
         <SheetHeader>
           <SheetTitle>Attachment Link</SheetTitle>
@@ -109,6 +123,16 @@ export function UpsertLinksDialog({ correlationGuid }) {
             />
             <Label htmlFor="isAnonymous">Is Anonymous?</Label>
           </div>
+          {mode === "u" && (
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="disable"
+                checked={disable}
+                onCheckedChange={setDisable}
+              />
+              <Label htmlFor="disable">Disable</Label>
+            </div>
+          )}
         </div>
         <SheetFooter>
           <SheetClose asChild>

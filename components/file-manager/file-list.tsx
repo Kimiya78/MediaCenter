@@ -51,8 +51,11 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
   const fetchFiles = async (page: number) => {
     setIsLoading(true)
     try {
-      const response = await fetch(
-        `${ConfigURL.baseUrl}/fetch_media?page_number=${page}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${selectedFolderId}`,
+
+      const folderId = selectedFolderId === null ? "1" : selectedFolderId;
+      debugger
+      const response = await fetch(       
+        `${ConfigURL.baseUrl}/fetch_media?page_number=${page}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${folderId}`,
       )
       if (!response.ok) {
         throw new Error(`Failed to fetch data. Status: ${response.status}`)

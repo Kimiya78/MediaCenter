@@ -8,6 +8,9 @@ import { CirclePlus, Download, Edit2 } from "lucide-react";
 import ConfigURL from "@/config";
 import {AddLinksDialog} from "@/components/addLinks-dialog"; 
 
+import { UpsertLinksDialog } from "@/components/upsertLinks-dialog"; 
+
+
 interface Link {
   AttachmentURLGUID: string;
   FileGUID: string;
@@ -89,7 +92,8 @@ export default function LinksDialog({ isOpen, onClose, fileGUID }: LinksDialogPr
           <DialogTitle>Links</DialogTitle>
         </DialogHeader>
         <div className="max-h-[400px] overflow-y-auto">
-          <AddLinksDialog />
+          {/* <AddLinksDialog /> */}
+          <UpsertLinksDialog correlationGuid={fileGUID} mode="c" />
 
           <Table>
             <TableHeader>
@@ -124,9 +128,9 @@ export default function LinksDialog({ isOpen, onClose, fileGUID }: LinksDialogPr
                     <TableCell>{link.CreatedByID}</TableCell>
                     <TableCell>{new Date(link.CreatedDateTime).toLocaleString()}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" onClick={() => handleEdit(link)}>
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
+                      
+                      <UpsertLinksDialog correlationGuid={fileGUID} mode="u" />
+
                     </TableCell>
                   </TableRow>
                 ))
