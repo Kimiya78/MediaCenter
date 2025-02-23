@@ -16,7 +16,7 @@ import ConfigURL from "@/config";
 import { Edit2 } from "lucide-react";
 
 
-export function UpsertLinksDialog({ correlationGuid, mode }) {
+export function UpsertLinksDialog({  attachmentURLGUID , correlationGuid, mode }) {
   const [expiresOn, setExpiresOn] = useState("");
   const [password, setPassword] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
@@ -25,23 +25,33 @@ export function UpsertLinksDialog({ correlationGuid, mode }) {
 
   useEffect(() => {
     async function fetchData() {
+      if (mode !== "u" || !correlationGuid) return; // Only fetch if in update mode
+      
       try {
-        const response = await fetch(`${ConfigURL.baseUrl}/get_data`, {
+        const response = await fetch(`${ConfigURL.baseUrl}/get_url`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ correlationGuid }),
+          body: JSON.stringify({ FileGUID: correlationGuid }),
         });
-
+  
         if (!response.ok) throw new Error("Failed to fetch data");
+  
         const data = await response.json();
         setFetchedData(data);
+  
+        // Ensure the state updates correctly
+        setExpiresOn(data.ExpiresOnDate );
+        setPassword(data.PasswordHash || "");
+        setIsAnonymous(data.IsAnonymous);
+        setDisable(data.Inactive || false);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     }
-
-    if (correlationGuid) fetchData();
-  }, [correlationGuid]);
+  
+    fetchData();
+  }, [mode, correlationGuid]); // Runs only when mode or correlationGuid changes
+  
 
   const handleCheckboxChange = (checked) => {
     setIsAnonymous(checked);
@@ -51,28 +61,53 @@ export function UpsertLinksDialog({ correlationGuid, mode }) {
 //   const handleUpdateURL = () {} 
 
   const handleSubmit = async () => {
-    const payload = {
-      FileGUID: correlationGuid,
-      ExpiresOnDate: expiresOn || null,
-      PasswordHash: isAnonymous ? null : password,
-      IsAnonymous: isAnonymous,
-      Inactive: disable,
-    };
+    // const payload = {
+    //   FileGUID: correlationGuid,
+    //   ExpiresOnDate: expiresOn,
+    //   PasswordHash: isAnonymous ? null : password,
+    //   IsAnonymous: isAnonymous,
+    //   Inactive: disable,
+    // };
+    debugger
+
+    const payload =
+      mode === "c"
+        ? {
+            FileGUID: correlationGuid,
+            ExpiresOnDate: expiresOn,
+            PasswordHash: isAnonymous ? null : password,
+            IsAnonymous: isAnonymous,
+            Inactive: disable,
+          }
+        : {
+            FileGUID: correlationGuid,
+            AttachmentURLGUID : attachmentURLGUID,
+            ExpiresOnDate: expiresOn,
+            PasswordHash: isAnonymous ? null : password,
+            IsAnonymous: isAnonymous,
+            Inactive: disable,
+          };
+
+    const isCreateMode = mode === "c";
+    const endpoint = isCreateMode ? "/create_url" : "/update_url";
+    const method = isCreateMode ? "POST" : "PUT";  // Use PUT for updates
 
     try {
-      const response = await fetch(`${ConfigURL.baseUrl}/create_url`, {
-        method: "POST",
+      const response = await fetch(`${ConfigURL.baseUrl}${endpoint}`, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error("Failed to create URL");
-      console.log("URL created successfully!");
+      if (!response.ok) throw new Error(`Failed to ${isCreateMode ? "create" : "update"} URL`);
+
+      console.log(`URL ${isCreateMode ? "created" : "updated"} successfully!`);
       setTimeout(() => window.location.reload(), 500);
     } catch (error) {
       console.error("Error submitting data:", error);
     }
   };
+
 
   return (
     <Sheet>

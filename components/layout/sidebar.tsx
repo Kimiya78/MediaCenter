@@ -18,7 +18,7 @@ export function Sidebar() {
   const [announcement, setAnnouncement] = useState<{ oldName: string; newName: string } | null>(null);
   const [folderList, setFolderList] = useState<FolderItem[]>([]); // Local state for folder list
 
-  const { data, isLoading, error } = NexxFetch.useGetData<{ folders: FolderItem[] }>(
+  const { data, isLoading, error , refetch } = NexxFetch.useGetData<{ folders: FolderItem[] }>(
     navigationItemsUrl,
     ["Folders"]
   );
@@ -116,7 +116,9 @@ export function Sidebar() {
       const isSelected = folder.FolderID === selectedFolderId;
 
       return (
-        <div key={folder.FolderID} className="ml-4 nx-sideBar pr-4 rtl:pr-4 ">
+        <div key={folder.FolderID} className="ml-3 nx-sideBar pr-4 rtl:pr-4 ">
+           {isLoading && <p>Loading folders...</p>} {/*  {isLoading ? <p>Loading folders...</p>:<p>loaded</p>} */}
+
           <div
               className={`flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer 
                 transition-all 
@@ -151,14 +153,14 @@ export function Sidebar() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <h3
-                      className={`font-medium text-sm truncate max-w-[70px] ${
+                      className={`font-medium text-sm truncate max-w-[80px] ${
                         folder.PasswordRequired ? "text-red-500" : ""
                       }`}
                     >
                       {folder.FolderName}
                     </h3>
                   </TooltipTrigger>
-                  <TooltipContent side="top" align="start" className="max-w-[100px]">
+                  <TooltipContent side="top" align="start" className="max-w-[110px]">
                     <p className="text-sm">{folder.FolderName}</p>
                   </TooltipContent>
                 </Tooltip>
@@ -167,7 +169,7 @@ export function Sidebar() {
 
             </div>
           </div>
-          {hasChildren && isExpanded && <div className="ml-4">{renderFolderTree(folder.children)}</div>}
+          {hasChildren && isExpanded && <div className="ml-3">{renderFolderTree(folder.children)}</div>}
         </div>
       );
     });

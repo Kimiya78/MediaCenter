@@ -198,4 +198,27 @@
   .breadcrumb a:hover {
     text-decoration: underline;
   }
-  
+
+  /* app/global.css */
+
+  @font-face {
+    font-family: 'IranYekanBakh';
+    src: url('/fonts/YekanBakhRegular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+  }
+
+
+  /* app/global.css */
+
+  /* app/global.css */
+
+  * {
+    font-family: 'IranYekanBakh', sans-serif;
+  }
+
+  .persian-text {
+    font-family: 'IranYekanBakh', sans-serif;
+  }
+    
+

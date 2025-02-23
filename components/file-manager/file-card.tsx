@@ -1,30 +1,45 @@
-import type { FileItem } from "@/types/file"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { FileIcon } from "./file-icon"
-import { MoreVertical } from "lucide-react"
-import { ShareMenu } from "../share-menu"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-
+import type { FileItem } from "@/types/file";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { FileIcon } from "./file-icon";
+import { MoreVertical } from "lucide-react";
+import { ShareMenu } from "../share-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useState } from "react";
 
 interface FileCardProps {
-  file: FileItem
+  file: FileItem;
+  onRename: (fileId: string, newName: string) => void; // Add this prop for renaming
 }
 
-export function FileCard({ file }: FileCardProps) {
+export function FileCard({ file, onRename }: FileCardProps) {
+  const [newFileId, setNewFileId] = useState<string | null>(null);
+
   const truncateText = (text: string, maxLength: number) => {
-    if (!text) return "No description"
-    if (text.length <= maxLength) return text
-    return text.substring(0, maxLength) + "..."
-  }
-  // debugger
+    if (!text) return "No description";
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + "...";
+  };
+
+  const handleRenameFile = (fileId: string, newName: string) => {
+    if (!newName || newName.trim() === "") {
+      console.error("Invalid new name provided for renaming.");
+      return;
+    }
+    onRename(fileId, newName.trim()); // Call the parent's rename function
+    setNewFileId(fileId);
+    setTimeout(() => {
+      setNewFileId(null);
+    }, 2000);
+  };
 
   return (
     <Card className="w-full h-full min-h-[200px] flex flex-col nx-card">
       <CardHeader className="p-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <FileIcon type={file.type} className="file-icon flex-shrink-0" />
+            {/* Ensure FileIcon handles missing types gracefully */}
+            <FileIcon type={file.type?.toLowerCase() || "unknown"} className="file-icon flex-shrink-0" />
             <div className="min-w-0">
               <TooltipProvider>
                 <Tooltip>
@@ -49,22 +64,23 @@ export function FileCard({ file }: FileCardProps) {
               </Button>
             }
             isLocked={file.isLocked}
+            onRename={(newName: string) => handleRenameFile(file.id, newName)} // Pass the rename handler to ShareMenu
           />
         </div>
       </CardHeader>
       <CardContent className="p-3 pt-0">
         <div className="grid gap-1.5 text-xs">
           <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Created by</span>
-            <span className="font-medium truncate max-w-[120px]">{file.createdBy}</span>
+            <span className="text-muted-foreground">Type</span>
+            <span className="font-medium capitalize">{file.type || "Unknown"}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Date</span>
             <span className="font-medium">{file.createdDate}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Permission</span>
-            <span className="font-medium capitalize">{file.permission}</span>
+            <span className="text-muted-foreground">Created by</span>
+            <span className="font-medium truncate max-w-[120px]">{file.createdBy}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Description</span>
@@ -88,6 +104,5 @@ export function FileCard({ file }: FileCardProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
-

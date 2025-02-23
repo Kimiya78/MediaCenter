@@ -31,11 +31,11 @@ export default function Page() {
           <main className="flex-1 ">
             <div className="border-b bg-background">
               <div className="flex h-[5rem] items-center justify-between px-4 ">
+                <h1 className="text-xl font-semibold">Media Center</h1>
                 <div className="flex items-center gap-2">
                   <DirectionToggle />
                   <ThemeToggle />
                 </div>
-                <h1 className="text-xl font-semibold">Media Center</h1>
               </div>
               <div className="flex h-[3rem] items-center justify-between px-4 ">
                   <Breadcrumbs />

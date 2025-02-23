@@ -15,7 +15,7 @@ import { ShareDialog } from "./share-dialog";
 import { RenameDialog } from "./rename-dialog";
 import axios from "axios";
 import ConfigURL from "@/config";
-import { ViewerDialog } from "./ui/viewer-dialog"
+import { ViewerDialog } from "@/components/viewer-dialog"
 import { PasswordDialog } from "@/components/password-dialog";
 import LinksDialog  from "@/components/links-dialog";
 
@@ -153,7 +153,7 @@ export function ShareMenu({
   const handleShare = async () => {
     try {
       // ✅ New share URL using correlationGuid
-      const shareUrl = `https://localhost:8289/share?CorrelationGUID=${encodeURIComponent(correlationGuid)}`;
+      const shareUrl = `${ConfigURL.baseUrl}/share?CorrelationGUID=${encodeURIComponent(correlationGuid)}`;
       
       const shareMessage = `این فایل مورد نظر جهت دانلود میباشد: ${shareUrl}`;
   

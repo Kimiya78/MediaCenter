@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/pagination"
 import { useDirection } from "@/components/folder-manager/context"
 import ConfigURL  from "@/config"
+import '@/app/globals.css'
 
 
 interface FileListProps {
@@ -53,7 +54,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
     try {
 
       const folderId = selectedFolderId === null ? "1" : selectedFolderId;
-      debugger
+      
       const response = await fetch(       
         `${ConfigURL.baseUrl}/fetch_media?page_number=${page}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${folderId}`,
       )
@@ -69,7 +70,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
         type: item.FileExtension,
         size: item.FileSize / 1024,
         createdBy: item.CreatedBy,
-        createdDate: item.CreatedDateTime.split(" ")[0],
+        createdDate: item.CreatedDateTime,
         description: item.Description,
         permission: item.allowDeleteFile === "true" ? "owner" : "viewer",
         isLocked: false,
@@ -95,8 +96,14 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
     if (fileType === "all") return nameMatch
 
     const typeMap: Record<string, string[]> = {
-      documents: ["pdf", "docx", "txt", "xlx", "docx", "xlsx"],
-      images: ["jpg", "jpeg", "png", "gif"],
+      // documents: ["pdf", "docx", "txt", "xlx", "xlsx"],
+      pptx: ["pptx"],
+      pdf: ["pdf"],
+      docx: [ "docx"],
+      xlsx: ["xlsx"],
+      png: [ "png"],
+      // images: ["jpg", "jpeg", "png", "gif"],
+      jpg: [ "jpg" , "Jpg"],
       videos: ["mp4", "mov", "avi"],
     }
 
@@ -104,6 +111,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
   })
 
   const sortedFiles = [...filteredFiles].sort((a, b) => {
+
     const aValue = a[sortConfig.key]
     const bValue = b[sortConfig.key]
 
@@ -136,37 +144,58 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
   }
 
   const addNewFile = (file: File, description: string) => {
-    const today = new Date()
+    const today = new Date();
     const newFile: FileItem = {
       id: Date.now().toString(),
       name: file.name,
-      type: file.name.split(".").pop() || "",
+      type: file.name.split(".").pop()?.toLowerCase() || "unknown",
       size: file.size / 1024,
       createdBy: "You",
       createdDate: today.toISOString().split("T")[0],
       description,
       permission: "owner",
       isLocked: false,
-    }
-
-    setFiles((prevFiles) => [newFile, ...prevFiles])
-    setNewFileId(newFile.id)
+    };
+  
+    setFiles((prevFiles) => [newFile, ...prevFiles]); // Prepend the new file to the beginning
+    setNewFileId(newFile.id);
+  
     setTimeout(() => {
-      setNewFileId(null)
-    }, 2000)
-  }
+      setNewFileId(null);
+    }, 2000);
+  };
+
+  // const handleRenameFile = (fileId: string, newName: string) => {
+  //   setFiles((prevFiles) => {
+  //     const updatedFiles = prevFiles.map((file) =>
+  //       file.id === fileId ? { ...file, name: newName } : file
+  //     );
+  
+  //     return [...updatedFiles]; // ✅ Force React to detect the change
+  //   });
+  
+  //   // Apply animation to renamed file like an upload
+  //   setNewFileId(fileId);  
+  //   setTimeout(() => {
+  //     setNewFileId(null);
+  //   }, 2000);
+  // };
 
   const handleRenameFile = (fileId: string, newName: string) => {
+    if (!newName || newName.trim() === "") {
+      console.error("Invalid new name provided for renaming.");
+      return;
+    }
+  
     setFiles((prevFiles) => {
       const updatedFiles = prevFiles.map((file) =>
-        file.id === fileId ? { ...file, name: newName } : file
+        file.id === fileId ? { ...file, name: newName.trim() } : file
       );
-  
-      return [...updatedFiles]; // ✅ Force React to detect the change
+      return [...updatedFiles]; // Force React to detect the change
     });
   
     // Apply animation to renamed file like an upload
-    setNewFileId(fileId);  
+    setNewFileId(fileId);
     setTimeout(() => {
       setNewFileId(null);
     }, 2000);
@@ -218,7 +247,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
             </div>
           </th>
         ))}
-        <th className="px-4 py-3 w-10"></th>
+        <th className="px-4 py-3 w-10  " ></th>
       </tr>
     )
   }
@@ -227,11 +256,11 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
     return sortedFiles.map((file) => (
       <tr key={file.id} className="border-b hover:bg-muted/50">
         {["name", "type", "size", "createdBy", "createdDate"].map((field) => (
-          <td key={field} className={`px-4 py-3 ${dir === "rtl" ? "text-right" : "text-left"}`}>
+          <td key={field} className={`px-4 py-3 persian-text ${dir === "rtl" ? "text-right" : "text-left"}`}>
             {file[field as keyof FileItem]}
           </td>
         ))}
-        <td className="px-4 py-3 text-right">
+        <td className="px-4 py-3 text-right ">
 
             <ShareMenu
               fileId={file.id}
@@ -244,7 +273,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
               correlationGuid={file.correlationGuid}
               folderId={selectedFolderId}
               requiresPassword={false}
-              trigger={<MoreVertical className="h-4 w-4" />}
+              trigger={<MoreVertical className="h-4 w-4 cursor-pointer" />}
               isLocked={file.isLocked}
               onRename={handleRenameFile} // ✅ Passes update function correctly
             />
@@ -269,13 +298,18 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
               />
             </div>
             <Select value={fileType} onValueChange={setFileType}>
-              <SelectTrigger className="w-full sm:w-32">
+              <SelectTrigger className="w-full sm:w-32 persian-text">
                 <SelectValue placeholder={dir === "rtl" ? "فیلتر" : "Filter"} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{dir === "rtl" ? "همه" : "All"}</SelectItem>
-                <SelectItem value="documents">{dir === "rtl" ? "اسناد" : "Documents"}</SelectItem>
-                <SelectItem value="images">{dir === "rtl" ? "تصاویر" : "Images"}</SelectItem>
+                <SelectItem value="pptx">{dir === "rtl" ? "pptx" : "pptx"}</SelectItem>
+                <SelectItem value="pdf">{dir === "rtl" ? "PDF" : "PDF"}</SelectItem>
+                <SelectItem value="docx">{dir === "rtl" ? "docx" : "docx"}</SelectItem>
+                <SelectItem value="xlsx">{dir === "rtl" ? "xlsx" : "xlsx"}</SelectItem>
+                <SelectItem value="png">{dir === "rtl" ? "png" : "png"}</SelectItem>
+                <SelectItem value="jpg" >{dir === "rtl" ? "jpg" : "jpg"}</SelectItem>
+                {/* <SelectItem value="images">{dir === "rtl" ? "تصاویر" : "Images"}</SelectItem> */}
                 <SelectItem value="videos">{dir === "rtl" ? "ویدیوها" : "Videos"}</SelectItem>
               </SelectContent>
             </Select>
@@ -314,7 +348,10 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 lg:grid-cols-3 gap-4 ">
             {sortedFiles.map((file) => (
               <div key={file.id} className={`${newFileId === file.id ? "animate-new-file" : ""}`}>
-                <FileCard file={file} actions={<FileActions file={file} />} />
+                <FileCard  key={file.id}
+                            file={file}
+                            onRename={handleRenameFile} // Pass the rename handler
+                          />
               </div>
             ))}
           </div>

@@ -15,13 +15,28 @@ interface ViewerDialogProps {
 }
 
 export function ViewerDialog({ isOpen, onClose, viewerData }: ViewerDialogProps) {
+  
+  const formatDateTime = (dateTime: string): string => {
+    if (!dateTime) return ""; // Handle empty or invalid datetime strings
+    const dateObject = new Date(dateTime);
+    const year = dateObject.getFullYear();
+    const month = String(dateObject.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const day = String(dateObject.getDate()).padStart(2, '0');
+    const hours = String(dateObject.getHours()).padStart(2, '0');
+    const minutes = String(dateObject.getMinutes()).padStart(2, '0');
+    const seconds = String(dateObject.getSeconds()).padStart(2, '0');
+
+    return `${year}-${month}-${day}  ${hours}:${minutes}:${seconds}`;
+  }
+  
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="  sm:max-w-[800px]">
         <DialogHeader>
           <DialogTitle>Viewers</DialogTitle>
         </DialogHeader>
-        <div className="max-h-[300px] overflow-y-auto">
+        <div className="max-h-[450px] overflow-y-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -40,7 +55,7 @@ export function ViewerDialog({ isOpen, onClose, viewerData }: ViewerDialogProps)
                 viewerData.map((viewer, index) => (
                   <TableRow key={index}>
                     <TableCell>{viewer.author}</TableCell>
-                    <TableCell>{viewer.createdDateTime}</TableCell>
+                    <TableCell>{formatDateTime(viewer.FormattedDateTime)}</TableCell>
                   </TableRow>
                 ))
               )}

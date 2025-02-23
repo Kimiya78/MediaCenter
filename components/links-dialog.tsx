@@ -6,13 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CirclePlus, Download, Edit2 } from "lucide-react";
 import ConfigURL from "@/config";
-import {AddLinksDialog} from "@/components/addLinks-dialog"; 
+// import {AddLinksDialog} from "@/components/addLinks-dialog"; 
 
 import { UpsertLinksDialog } from "@/components/upsertLinks-dialog"; 
 
 
 interface Link {
-  AttachmentURLGUID: string;
   FileGUID: string;
   ExpiresOnDate: string;
   IsAnonymous: boolean;
@@ -27,7 +26,7 @@ interface LinksDialogProps {
   fileGUID: string; 
 }
 
-export default function LinksDialog({ isOpen, onClose, fileGUID }: LinksDialogProps) {
+export default function LinksDialog({ isOpen, onClose, fileGUID  }: LinksDialogProps) {
   const [links, setLinks] = useState<Link[]>([]);
   const [isAddLinksOpen, setIsAddLinksOpen] = useState(false);
 
@@ -37,17 +36,6 @@ export default function LinksDialog({ isOpen, onClose, fileGUID }: LinksDialogPr
       fetchLinks();
     }
   }, [isOpen]);
-// ------------------------------------------
-
-  const handleOpenAddLinks = () => setIsAddLinksOpen(true);
-  const handleCloseAddLinks = () => setIsAddLinksOpen(false);
-
-  const handleAddLinkSubmit = (data: { expiresOn: string; password: string; isAnonymous: boolean }) => {
-    console.log("New Link Data:", data);
-    // Here, you can handle the submitted data (e.g., API call to save the link)
-  };
-
-
 //----------------------------------------
   const fetchLinks = async () => {
     try {
@@ -56,12 +44,13 @@ export default function LinksDialog({ isOpen, onClose, fileGUID }: LinksDialogPr
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ FileGUID: fileGUID }),
       });
-
+      debugger
       if (!response.ok) {
         throw new Error("Failed to fetch links");
       }
 
       const data = await response.json();
+      console.log(data.attachmentURLGUID)
       if (data.AttachmentURL && data.AttachmentURL.length > 0) {
         setLinks(data.AttachmentURL); 
       } else {
@@ -87,13 +76,13 @@ export default function LinksDialog({ isOpen, onClose, fileGUID }: LinksDialogPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[800px]">
         <DialogHeader>
           <DialogTitle>Links</DialogTitle>
         </DialogHeader>
         <div className="max-h-[400px] overflow-y-auto">
           {/* <AddLinksDialog /> */}
-          <UpsertLinksDialog correlationGuid={fileGUID} mode="c" />
+          <UpsertLinksDialog attachmentURLGUID={fileGUID} correlationGuid={fileGUID} mode="c" />
 
           <Table>
             <TableHeader>
@@ -129,7 +118,7 @@ export default function LinksDialog({ isOpen, onClose, fileGUID }: LinksDialogPr
                     <TableCell>{new Date(link.CreatedDateTime).toLocaleString()}</TableCell>
                     <TableCell>
                       
-                      <UpsertLinksDialog correlationGuid={fileGUID} mode="u" />
+                      <UpsertLinksDialog  attachmentURLGUID ={link.AttachmentURLGUID} correlationGuid={fileGUID} mode="u" />
 
                     </TableCell>
                   </TableRow>
