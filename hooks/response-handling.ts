@@ -103,7 +103,7 @@ class NexxFetch {
     const queryResult = useQuery<AxiosResponse<T>, Error>({
       queryKey,
       queryFn: async (): Promise<AxiosResponse<T>> => {
-        const response = await axiosInstance.get<T>(url); // Specify the generic type here
+        const response = await axiosInstance.get<T>(url);
         console.log('Axios Response:', response);
 
         return response.data; // Return the full response object

@@ -1,17 +1,17 @@
-"use client"
-
+"use client";
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CirclePlus, Download, Edit2 } from "lucide-react";
+import { Download } from "lucide-react";
 import ConfigURL from "@/config";
-// import {AddLinksDialog} from "@/components/addLinks-dialog"; 
+import { UpsertLinksDialog } from "@/components/upsertLinks-dialog";
+import NexxFetch from "@/hooks/response-handling";
+import { useDirection } from "@/components/folder-manager/context";
 
-import { UpsertLinksDialog } from "@/components/upsertLinks-dialog"; 
-
-
+// Adjusted Link interface to match the structure of the API response.
 interface Link {
+  AttachmentURLGUID: string;
   FileGUID: string;
   ExpiresOnDate: string;
   IsAnonymous: boolean;
@@ -23,84 +23,65 @@ interface Link {
 interface LinksDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  fileGUID: string; 
+  fileGUID: string;
 }
 
-export default function LinksDialog({ isOpen, onClose, fileGUID  }: LinksDialogProps) {
+export default function LinksDialog({ isOpen, onClose, fileGUID }: LinksDialogProps) {
   const [links, setLinks] = useState<Link[]>([]);
-  const [isAddLinksOpen, setIsAddLinksOpen] = useState(false);
+  const navigationItemsUrl = `${ConfigURL.baseUrl}/get_url?FileGUID=${fileGUID}`;
+  const { data, isLoading, error: fetchError, refetch } = NexxFetch.useGetData<{ AttachmentURL: Link[] }>(
+    navigationItemsUrl,
+    [fileGUID]
+  );
 
-  // Fetch links when the dialog is opened
+  // Dynamically fetch the direction from the context
+  const { dir } = useDirection();
+
   useEffect(() => {
     if (isOpen) {
-      fetchLinks();
+      refetch();
     }
-  }, [isOpen]);
-//----------------------------------------
-  const fetchLinks = async () => {
-    try {
-      const response = await fetch(`${ConfigURL.baseUrl}/get_url`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ FileGUID: fileGUID }),
-      });
-      debugger
-      if (!response.ok) {
-        throw new Error("Failed to fetch links");
-      }
+  }, [isOpen, fileGUID, refetch]);
 
-      const data = await response.json();
-      console.log(data.attachmentURLGUID)
-      if (data.AttachmentURL && data.AttachmentURL.length > 0) {
-        setLinks(data.AttachmentURL); 
-      } else {
-        setLinks([]); 
-      }
-    } catch (error) {
-      console.error("Error fetching links:", error);
+  useEffect(() => {
+    if (data?.AttachmentURL) {
+      setLinks(data.AttachmentURL);
+    } else {
+      setLinks([]);
     }
-  };
+  }, [data]);
 
   const handleDownload = (link: Link) => {
     console.log("Downloading file with AttachmentURLGUID:", link.AttachmentURLGUID);
   };
 
-  const handleEdit = (link: Link) => {
-    console.log("Editing file record", link);
-  };
-
-  const handleAddLink = () => {
-    console.log("Adding new link");
-  };
-
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px]">
+      <DialogContent className="sm:max-w-[900px]">
         <DialogHeader>
-          <DialogTitle>Links</DialogTitle>
+          <DialogTitle>{dir === "rtl" ? "لینک‌ها" : "Links"}</DialogTitle>
         </DialogHeader>
         <div className="max-h-[400px] overflow-y-auto">
-          {/* <AddLinksDialog /> */}
           <UpsertLinksDialog attachmentURLGUID={fileGUID} correlationGuid={fileGUID} mode="c" />
-
+          {isLoading && <p>{dir === "rtl" ? "در حال بارگذاری..." : "Loading..."}</p>}
+          {fetchError && <p>{dir === "rtl" ? "خطا در دریافت لینک‌ها" : "Error fetching links"}</p>}
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Download</TableHead>
-                <TableHead>Expires On</TableHead>
-                <TableHead>Anonymous</TableHead>
-                <TableHead>Passcode</TableHead>
-                <TableHead>Created By</TableHead>
-                <TableHead>Created On</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>{dir === "rtl" ? "دریافت فایل" : "Download"}</TableHead>
+                <TableHead>{dir === "rtl" ? "تاریخ انقضا" : "Expires On"}</TableHead>
+                <TableHead>{dir === "rtl" ? "دسترسی همگانی" : "Anonymous"}</TableHead>
+                <TableHead>{dir === "rtl" ? "رمزگذاری شده" : "Passcode"}</TableHead>
+                <TableHead>{dir === "rtl" ? "ایجاد کننده" : "Created By"}</TableHead>
+                <TableHead>{dir === "rtl" ? "تاریخ بارگذاری" : "Created On"}</TableHead>
+                <TableHead>{dir === "rtl" ? "ویرایش" : "Edit"}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {links.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center">
-                    No links available.
+                    {dir === "rtl" ? "لینکی موجود نیست." : "No links available."}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -111,15 +92,23 @@ export default function LinksDialog({ isOpen, onClose, fileGUID  }: LinksDialogP
                         <Download className="h-4 w-4" />
                       </Button>
                     </TableCell>
-                    <TableCell>{link.ExpiresOnDate ? new Date(link.ExpiresOnDate).toLocaleString() : "No Expiration"}</TableCell>
-                    <TableCell>{link.IsAnonymous ? "Yes" : "No"}</TableCell>
-                    <TableCell>{link.NeedPassword ? "Yes" : "No"}</TableCell>
+                    <TableCell>
+                      {link.ExpiresOnDate
+                        ? new Date(link.ExpiresOnDate).toLocaleString()
+                        : dir === "rtl"
+                        ? "بدون انقضا"
+                        : "No Expiration"}
+                    </TableCell>
+                    <TableCell>{link.IsAnonymous ? (dir === "rtl" ? "بله" : "Yes") : dir === "rtl" ? "خیر" : "No"}</TableCell>
+                    <TableCell>{link.NeedPassword ? (dir === "rtl" ? "بله" : "Yes") : dir === "rtl" ? "خیر" : "No"}</TableCell>
                     <TableCell>{link.CreatedByID}</TableCell>
                     <TableCell>{new Date(link.CreatedDateTime).toLocaleString()}</TableCell>
                     <TableCell>
-                      
-                      <UpsertLinksDialog  attachmentURLGUID ={link.AttachmentURLGUID} correlationGuid={fileGUID} mode="u" />
-
+                      <UpsertLinksDialog
+                        attachmentURLGUID={link.AttachmentURLGUID}
+                        correlationGuid={fileGUID}
+                        mode="u"
+                      />
                     </TableCell>
                   </TableRow>
                 ))
@@ -128,7 +117,7 @@ export default function LinksDialog({ isOpen, onClose, fileGUID  }: LinksDialogP
           </Table>
         </div>
         <DialogFooter>
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={onClose}>{dir === "rtl" ? "بستن" : "Close"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

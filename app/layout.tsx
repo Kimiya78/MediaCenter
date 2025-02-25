@@ -19,7 +19,7 @@ export default function RootLayout({
   const queryClient = new QueryClient();
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="overflow-hidden ">
       <body className={inter.className}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider

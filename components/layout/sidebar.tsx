@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronRight, FolderClosed, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import NexxFetch from "@/data/response-handling";
+import NexxFetch from "@/hooks/response-handling";
 import { FolderItem } from "@/types/type";
 import { useFolder } from "@/components/folder-manager/context";
 import ConfigURL from "@/config";
@@ -18,7 +18,7 @@ export function Sidebar() {
   const [announcement, setAnnouncement] = useState<{ oldName: string; newName: string } | null>(null);
   const [folderList, setFolderList] = useState<FolderItem[]>([]); // Local state for folder list
 
-  const { data, isLoading, error , refetch } = NexxFetch.useGetData<{ folders: FolderItem[] }>(
+  const { data, isLoading, error } = NexxFetch.useGetData<{ folders: FolderItem[] }>(
     navigationItemsUrl,
     ["Folders"]
   );
@@ -117,8 +117,6 @@ export function Sidebar() {
 
       return (
         <div key={folder.FolderID} className="ml-3 nx-sideBar pr-4 rtl:pr-4 ">
-           {isLoading && <p>Loading folders...</p>} {/*  {isLoading ? <p>Loading folders...</p>:<p>loaded</p>} */}
-
           <div
               className={`flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer 
                 transition-all 

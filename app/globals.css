@@ -220,5 +220,21 @@
   .persian-text {
     font-family: 'IranYekanBakh', sans-serif;
   }
+
+  
+
+  @layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
     
+/* 
+  .scrollbar-custom {
+    @apply scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-500 hover:scrollbar-thumb-gray-700;
+  } */
+
 

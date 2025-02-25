@@ -66,7 +66,7 @@ export function ShareMenu({
 
   const handlePasswordSubmit = (enteredPass: string) => {
     console.log("Password entered:", enteredPass);
-    // Perform any necessary action after password validation
+
   };
 
 

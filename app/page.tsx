@@ -26,10 +26,10 @@ export default function Page() {
   return (
     <DirectionProvider>
       <FolderProvider>
-        <div className="flex h-screen bg-background">
+        <div className="flex  bg-background">
           <Sidebar />
-          <main className="flex-1 ">
-            <div className="border-b bg-background">
+          <main className="grid grid-rows-[8rem_auto] w-full  h-[calc(100vh_-_10rem)]">
+            <div className="border-b bg-background  grid grid-rows-[3re_1rem]">
               <div className="flex h-[5rem] items-center justify-between px-4 ">
                 <h1 className="text-xl font-semibold">Media Center</h1>
                 <div className="flex items-center gap-2">
@@ -41,7 +41,7 @@ export default function Page() {
                   <Breadcrumbs />
               </div>
             </div>
-
+            
             <FileListWrapper />
           </main>
         </div>

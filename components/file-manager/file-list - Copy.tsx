@@ -22,11 +22,6 @@ import {
 import { useDirection } from "@/components/folder-manager/context"
 import ConfigURL  from "@/config"
 import '@/app/globals.css'
-import NexxFetch from "@/hooks/response-handling"
-import { ScrollArea } from "@/components/ui/scroll-area"
-
-
-
 
 
 interface FileListProps {
@@ -35,35 +30,40 @@ interface FileListProps {
 }
 
 export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
-  const { dir } = useDirection();
-  const [view, setView] = useState<"grid" | "list">("grid");
-  const [files, setFiles] = useState<FileItem[]>([]);
+  const { dir } = useDirection()
+  const [view, setView] = useState<"grid" | "list">("grid")
+  // debugger
+  const [files, setFiles] = useState<FileItem[]>([])
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: "name",
     direction: "asc",
-  });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [goToPage, setGoToPage] = useState("");
-  const [fileType, setFileType] = useState<string>("all");
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const [newFileId, setNewFileId] = useState<string | null>(null);
-  // NexxFetch API Call
-  const navigationItemsUrl = `${ConfigURL.baseUrl}/fetch_media?page_number=${currentPage}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${selectedFolderId}`;
+  })
+  const [currentPage, setCurrentPage] = useState(1)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [pageSize, setPageSize] = useState(10)
+  const [isUploadOpen, setIsUploadOpen] = useState(false)
+  const [goToPage, setGoToPage] = useState("")
+  const [fileType, setFileType] = useState<string>("all")
+  const [totalRecords, setTotalRecords] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [newFileId, setNewFileId] = useState<string | null>(null)
 
-  const { data, isLoading, error: fetchError, refetch } =  NexxFetch.useGetData<{
-    page_number: number;
-    total_records: number;
-    page_size: number;
-    items: FileItem[];
-  }>(navigationItemsUrl, [currentPage, pageSize, selectedFolderId]);
+  const fetchFiles = async (page: number) => {
+    setIsLoading(true)
+    try {
 
-  useEffect(() => {
-    if (data?.items) {
-      const transformedData: FileItem[] = data.items.map((item) => ({
+      const folderId = selectedFolderId === null ? "1" : selectedFolderId;
+      
+      const response = await fetch(       
+        `${ConfigURL.baseUrl}/fetch_media?page_number=${page}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${folderId}`,
+      )
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data. Status: ${response.status}`)
+      }
+      const apiData = await response.json()
+      // debugger
+      const transformedData: FileItem[] = apiData.items.map((item: any) => ({
         correlationGuid: item.CorrelationGUID,
         id: item.FileGUID,
         name: item.FileName,
@@ -74,79 +74,75 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
         description: item.Description,
         permission: item.allowDeleteFile === "true" ? "owner" : "viewer",
         isLocked: false,
-      }));
-
-      setFiles(transformedData);
-      setTotalRecords(data.total_records || 0);
-      setPageSize(data.page_size || 10);
-      setError(null); // Clear any previous errors
+      }))
+      setFiles(transformedData)
+      setTotalRecords(apiData.total_records)
+      setPageSize(apiData.page_size)
+      setError(null)
+    } catch (error) {
+      setError("Error fetching data. Please try again.")
+      console.error("Fetch error:", error)
+    } finally {
+      setIsLoading(false)
     }
-  }, [data]);
+  }
 
   useEffect(() => {
-    if (fetchError) {
-      setError("Error fetching data. Please try again.");
-      console.error("Fetch error:", fetchError);
-    }
-  }, [fetchError]);
+    fetchFiles(currentPage)
+  }, [currentPage, pageSize, selectedFolderId])
 
-  useEffect(() => {
-    refetch(); // Refetch data when dependencies change
-  }, [currentPage, pageSize, selectedFolderId, refetch]);
-
-  // Filtering logic (unchanged)
   const filteredFiles = files.filter((file) => {
-    const nameMatch = file.name.toLowerCase().includes(searchQuery.toLowerCase());
-    if (fileType === "all") return nameMatch;
+    const nameMatch = file.name.toLowerCase().includes(searchQuery.toLowerCase())
+    if (fileType === "all") return nameMatch
 
     const typeMap: Record<string, string[]> = {
+      // documents: ["pdf", "docx", "txt", "xlx", "xlsx"],
       pptx: ["pptx"],
       pdf: ["pdf"],
-      docx: ["docx"],
+      docx: [ "docx"],
       xlsx: ["xlsx"],
-      png: ["png"],
-      jpg: ["jpg", "Jpg"],
+      png: [ "png"],
+      // images: ["jpg", "jpeg", "png", "gif"],
+      jpg: [ "jpg" , "Jpg"],
       videos: ["mp4", "mov", "avi"],
-    };
+    }
 
-    return nameMatch && typeMap[fileType]?.includes(file.type.toLowerCase());
-  });
+    return nameMatch && typeMap[fileType]?.includes(file.type.toLowerCase())
+  })
 
-  // Sorting logic (unchanged)
   const sortedFiles = [...filteredFiles].sort((a, b) => {
-    const aValue = a[sortConfig.key];
-    const bValue = b[sortConfig.key];
+
+    const aValue = a[sortConfig.key]
+    const bValue = b[sortConfig.key]
 
     if (typeof aValue === "string" && typeof bValue === "string") {
-      return sortConfig.direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+      return sortConfig.direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue)
     }
 
     if (typeof aValue === "number" && typeof bValue === "number") {
-      return sortConfig.direction === "asc" ? aValue - bValue : bValue - aValue;
+      return sortConfig.direction === "asc" ? aValue - bValue : bValue - aValue
     }
 
-    return 0;
-  });
+    return 0
+  })
 
-  // Pagination logic (unchanged)
-  const totalPages = Math.ceil(totalRecords / pageSize);
+  const totalPages = Math.ceil(totalRecords / pageSize)
 
   const handleSort = (key: keyof FileItem) => {
     setSortConfig((current) => ({
       key,
       direction: current.key === key && current.direction === "asc" ? "desc" : "asc",
-    }));
-  };
+    }))
+  }
 
   const handleGoToPage = () => {
-    const pageNumber = Number.parseInt(goToPage);
+    const pageNumber = Number.parseInt(goToPage)
     if (pageNumber >= 1 && pageNumber <= totalPages) {
-      setCurrentPage(pageNumber);
-      setGoToPage("");
+      setCurrentPage(pageNumber)
+      setGoToPage("")
     }
-  };
+  }
 
-  // Upload logic (unchanged)
   const addNewFile = (file: File, description: string) => {
     const today = new Date();
     const newFile: FileItem = {
@@ -160,36 +156,52 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
       permission: "owner",
       isLocked: false,
     };
-
+  
     setFiles((prevFiles) => [newFile, ...prevFiles]); // Prepend the new file to the beginning
     setNewFileId(newFile.id);
-
+  
     setTimeout(() => {
       setNewFileId(null);
     }, 2000);
   };
 
-  // Rename logic (unchanged)
+  // const handleRenameFile = (fileId: string, newName: string) => {
+  //   setFiles((prevFiles) => {
+  //     const updatedFiles = prevFiles.map((file) =>
+  //       file.id === fileId ? { ...file, name: newName } : file
+  //     );
+  
+  //     return [...updatedFiles]; // ✅ Force React to detect the change
+  //   });
+  
+  //   // Apply animation to renamed file like an upload
+  //   setNewFileId(fileId);  
+  //   setTimeout(() => {
+  //     setNewFileId(null);
+  //   }, 2000);
+  // };
+
   const handleRenameFile = (fileId: string, newName: string) => {
-    debugger
     if (!newName || newName.trim() === "") {
       console.error("Invalid new name provided for renaming.");
       return;
     }
-
+  
     setFiles((prevFiles) => {
       const updatedFiles = prevFiles.map((file) =>
         file.id === fileId ? { ...file, name: newName.trim() } : file
       );
       return [...updatedFiles]; // Force React to detect the change
     });
-
+  
     // Apply animation to renamed file like an upload
     setNewFileId(fileId);
     setTimeout(() => {
       setNewFileId(null);
     }, 2000);
   };
+  
+  
   
 
   const FileActions = ({ file }: { file: FileItem }) => {
@@ -210,7 +222,6 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
       </DropdownMenu>
     )
   }
-  
 
 
   const renderTableHeader = () => {
@@ -272,7 +283,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
   }
 
   return (
-    <div className=" grid grid-rows-[5rem_auto_3.5rem] h-[calc(100vh_-_10rem)]">
+    <div className="h-screen flex flex-col">
       {/* Fixed Header */}
       <div className="sticky top-0 z-10 bg-background border-b p-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -332,39 +343,14 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
       </div>
 
       {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-auto p-4 scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-500 hover:scrollbar-thumb-gray-700 overflow-y-scroll ">
-      
-      {isLoading && selectedFolderId !== null && (
-        <div className="absolute top-0 left-0 right-0 bottom-0 flex flex-col justify-center items-center bg-white bg-opacity-50 z-50">
-          <svg
-            aria-hidden="true"
-            className="w-16 h-16 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
-            viewBox="0 0 100 101"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-              fill="currentColor"
-            />
-            <path
-              d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-              fill="currentFill"
-            />
-          </svg>
-          {/* Loading Text */}
-          <p className="mt-4 text-gray-600 font-medium text-lg">Loading...</p>
-        </div>
-      )}
-
-
+      <div className="flex-1 overflow-auto p-4">
         {view === "grid" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 lg:grid-cols-3 gap-4 ">
             {sortedFiles.map((file) => (
               <div key={file.id} className={`${newFileId === file.id ? "animate-new-file" : ""}`}>
                 <FileCard  key={file.id}
                             file={file}
-                            onRename={handleRenameFile} // Pass the rename handler how to pass newName too ??????????????
+                            onRename={handleRenameFile} // Pass the rename handler
                           />
               </div>
             ))}

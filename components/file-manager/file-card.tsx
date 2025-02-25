@@ -6,6 +6,7 @@ import { MoreVertical } from "lucide-react";
 import { ShareMenu } from "../share-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
+import { FolderProvider, useFolder ,DirectionProvider } from "@/components/folder-manager/context"; 
 
 interface FileCardProps {
   file: FileItem;
@@ -14,6 +15,7 @@ interface FileCardProps {
 
 export function FileCard({ file, onRename }: FileCardProps) {
   const [newFileId, setNewFileId] = useState<string | null>(null);
+  const { selectedFolderId } = useFolder();
 
   const truncateText = (text: string, maxLength: number) => {
     if (!text) return "No description";
@@ -26,6 +28,8 @@ export function FileCard({ file, onRename }: FileCardProps) {
       console.error("Invalid new name provided for renaming.");
       return;
     }
+
+    debugger
     onRename(fileId, newName.trim()); // Call the parent's rename function
     setNewFileId(fileId);
     setTimeout(() => {
@@ -33,8 +37,15 @@ export function FileCard({ file, onRename }: FileCardProps) {
     }, 2000);
   };
 
+
+  const [files, setFiles] = useState<File[]>([]); // Assuming your files are in a state like this
+
+  const handleFileRemove = (correlationGuid: string) => {
+    setFiles(prevFiles => prevFiles.filter(file => file.correlationGuid !== correlationGuid));
+  };
+
   return (
-    <Card className="w-full h-full min-h-[200px] flex flex-col nx-card">
+    <Card className="w-full min-h-[200px] flex flex-col nx-card">
       <CardHeader className="p-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
@@ -58,13 +69,15 @@ export function FileCard({ file, onRename }: FileCardProps) {
             fileId={file.id}
             fileName={file.name}
             correlationGuid={file.correlationGuid}
+            folderId={selectedFolderId}
+            onFileRemove={handleFileRemove} 
             trigger={
               <Button variant="ghost" size="icon" className="h-8 w-8">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             }
             isLocked={file.isLocked}
-            onRename={(newName: string) => handleRenameFile(file.id, newName)} // Pass the rename handler to ShareMenu
+            onRename={handleRenameFile} // Pass the rename handler to ShareMenu
           />
         </div>
       </CardHeader>
