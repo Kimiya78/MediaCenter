@@ -23,6 +23,7 @@ import { useDirection } from "@/components/folder-manager/context"
 import ConfigURL  from "@/config"
 import '@/app/globals.css'
 import NexxFetch from "@/hooks/response-handling"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 
@@ -32,9 +33,11 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 interface FileListProps {
   initialFiles: FileItem[]
   selectedFolderId: string
+  setSelectedFolderId: (id: number | null) => void; // Ensure it's passed
+
 }
 
-export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
+export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  }: FileListProps) {
   const { dir } = useDirection();
   const [view, setView] = useState<"grid" | "list">("grid");
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -43,7 +46,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
     direction: "asc",
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState<string | null>(null);//useState("");
   const [pageSize, setPageSize] = useState(10);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [goToPage, setGoToPage] = useState("");
@@ -51,15 +54,26 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
   const [totalRecords, setTotalRecords] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [newFileId, setNewFileId] = useState<string | null>(null);
+  const [keyword_search, setKeywordSearch] = useState<string>('');
   // NexxFetch API Call
-  const navigationItemsUrl = `${ConfigURL.baseUrl}/fetch_media?page_number=${currentPage}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${selectedFolderId}`;
+  //const navigationItemsUrl = `${ConfigURL.baseUrl}/fetch_media?page_number=${currentPage}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${selectedFolderId}`;
+  const navigationItemsUrl = `${ConfigURL.baseUrl}/fetch_media?page_number=${currentPage}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${selectedFolderId}&keyword_search=${encodeURIComponent(keyword_search)}`;
+
 
   const { data, isLoading, error: fetchError, refetch } =  NexxFetch.useGetData<{
     page_number: number;
     total_records: number;
     page_size: number;
     items: FileItem[];
-  }>(navigationItemsUrl, [currentPage, pageSize, selectedFolderId]);
+  }>(navigationItemsUrl, [currentPage, pageSize, selectedFolderId , searchQuery]); //`${navigationItemsUrl}?keyword_search=${keyword_search ?? ""}&FolderID=${selectedFolderId ?? ""}`,
+
+  const formatFileSize = (sizeInBytes: number): string => {
+    const sizeInMB = sizeInBytes / (1024 * 1024);
+    return sizeInMB >= 1
+      ? sizeInMB.toFixed(2) + "    "+ " MB"
+      : (sizeInBytes / 1024).toFixed(2) + "    "+ " KB";
+  };
+  
 
   useEffect(() => {
     if (data?.items) {
@@ -68,7 +82,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
         id: item.FileGUID,
         name: item.FileName,
         type: item.FileExtension,
-        size: item.FileSize / 1024,
+        size: formatFileSize(item.FileSize),
         createdBy: item.CreatedBy,
         createdDate: item.CreatedDateTime,
         description: item.Description,
@@ -94,9 +108,27 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
     refetch(); // Refetch data when dependencies change
   }, [currentPage, pageSize, selectedFolderId, refetch]);
 
+  // ✅ Ensure API call updates with new `keyword_search`
+  useEffect(() => {
+    refetch(); // Call API when keyword_search changes
+  }, [keyword_search]);
+
+
+  // Reset search inputs when selectedFolderId changes
+  useEffect(() => {
+    setCurrentPage(1);  // Reset to the first page
+    // Clear the search query and keyword_search
+    setSearchQuery(null); // Reset searchQuery to null
+    setKeywordSearch(''); // Reset keyword_search to an empty string
+
+    // Optionally, refetch data to reflect the new folder selection
+    refetch();
+  }, [selectedFolderId]);
+  
+
   // Filtering logic (unchanged)
   const filteredFiles = files.filter((file) => {
-    const nameMatch = file.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const nameMatch = (file.name || "").toLowerCase().includes((searchQuery || "").toLowerCase());
     if (fileType === "all") return nameMatch;
 
     const typeMap: Record<string, string[]> = {
@@ -109,7 +141,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
       videos: ["mp4", "mov", "avi"],
     };
 
-    return nameMatch && typeMap[fileType]?.includes(file.type.toLowerCase());
+    return nameMatch && typeMap[fileType]?.includes((file.type || "").toLowerCase());
   });
 
   // Sorting logic (unchanged)
@@ -130,6 +162,12 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
 
   // Pagination logic (unchanged)
   const totalPages = Math.ceil(totalRecords / pageSize);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1); // Reset to the first page if currentPage is invalid
+    }
+  }, [totalPages]);
 
   const handleSort = (key: keyof FileItem) => {
     setSortConfig((current) => ({
@@ -192,6 +230,11 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
   };
   
 
+  const handleFileRemove = (correlationGuid: string) => {
+    debugger
+    setFiles((prevFiles) => prevFiles.filter((file) => file.correlationGuid !== correlationGuid));
+  };
+
   const FileActions = ({ file }: { file: FileItem }) => {
     // debugger
     return (
@@ -211,7 +254,6 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
     )
   }
   
-
 
   const renderTableHeader = () => {
     const headers = [
@@ -265,11 +307,19 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
               trigger={<MoreVertical className="h-4 w-4 cursor-pointer" />}
               isLocked={file.isLocked}
               onRename={handleRenameFile} // ✅ Passes update function correctly
+              onFileRemove={handleFileRemove}
             />
         </td>
       </tr>
     ))
   }
+
+  
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    refetch();
+  };
+
 
   return (
     <div className=" grid grid-rows-[5rem_auto_3.5rem] h-[calc(100vh_-_10rem)]">
@@ -280,12 +330,22 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
+                //type="text"
                 placeholder={dir === "rtl" ? "جستجوی فایل ها..." : "Search files..."}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                type="text"
+                placeholder="Search files..."
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  setSearchQuery(inputValue); // Update searchQuery
+                  setKeywordSearch(inputValue); // Sync keyword_search with searchQuery
+                }}
+                //onChange={(e) => setKeywordSearch(e.target.value)}
+                value={searchQuery || ""}
+                // onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8"
               />
             </div>
+
             <Select value={fileType} onValueChange={setFileType}>
               <SelectTrigger className="w-full sm:w-32 persian-text">
                 <SelectValue placeholder={dir === "rtl" ? "فیلتر" : "Filter"} />
@@ -305,27 +365,46 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="bg-background border rounded-lg p-0.5 flex">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setView("grid")}
-                className={view === "grid" ? "bg-muted" : ""}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setView("list")}
-                className={view === "list" ? "bg-muted" : ""}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
+       
+            <TooltipProvider>
+              <div className="bg-background border rounded-lg p-0.5 flex">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setView("grid")}
+                      className={view === "grid" ? "bg-muted" : ""}
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" align="center">
+                    <p className="text-sm">Grid View</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setView("list")}
+                      className={view === "list" ? "bg-muted" : ""}
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" align="center">
+                    <p className="text-sm">List View</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
+
             <Button onClick={() => setIsUploadOpen(true)}>
               <Upload className="mr-2 h-4 w-4" />
-              {dir === "rtl" ? "آپلود" : "Upload"}
+              {dir === "rtl" ? "بارگذاری فایل " : "Upload File"}
             </Button>
           </div>
         </div>
@@ -365,6 +444,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
                 <FileCard  key={file.id}
                             file={file}
                             onRename={handleRenameFile} // Pass the rename handler how to pass newName too ??????????????
+                            onFileRemove={handleFileRemove}
                           />
               </div>
             ))}
@@ -408,16 +488,16 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
                       href="#"
                       onClick={(e) => {
                         e.preventDefault()
-                        if (currentPage < totalPages) setCurrentPage(currentPage + 1)
+                        if (currentPage < totalPages) handlePageChange(currentPage + 1)
                       }}
                       className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
                     />
                   ) : (
                     <PaginationPrevious
-                      href="#"
+                      //href="#"
                       onClick={(e) => {
                         e.preventDefault()
-                        if (currentPage > 1) setCurrentPage(currentPage - 1)
+                        if (currentPage > 1) handlePageChange(currentPage - 1)
                       }}
                       className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
                     />
@@ -432,7 +512,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
                           href="#"
                           onClick={(e) => {
                             e.preventDefault()
-                            setCurrentPage(page)
+                            handlePageChange(page)
                           }}
                           isActive={currentPage === page}
                         >
@@ -452,10 +532,10 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
                 <PaginationItem>
                   {dir === "rtl" ? (
                     <PaginationPrevious
-                      href="#"
+                      //href="#"
                       onClick={(e) => {
                         e.preventDefault()
-                        if (currentPage > 1) setCurrentPage(currentPage - 1)
+                        if (currentPage > 1) handlePageChange(currentPage - 1)
                       }}
                       className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
                     />
@@ -464,7 +544,7 @@ export function FileList({ initialFiles, selectedFolderId }: FileListProps) {
                       href="#"
                       onClick={(e) => {
                         e.preventDefault()
-                        if (currentPage < totalPages) setCurrentPage(currentPage + 1)
+                        if (currentPage < totalPages) handlePageChange(currentPage + 1)
                       }}
                       className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
                     />

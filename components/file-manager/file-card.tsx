@@ -11,11 +11,14 @@ import { FolderProvider, useFolder ,DirectionProvider } from "@/components/folde
 interface FileCardProps {
   file: FileItem;
   onRename: (fileId: string, newName: string) => void; // Add this prop for renaming
+  onFileRemove: (correlationGuid: string) => void; 
 }
 
-export function FileCard({ file, onRename }: FileCardProps) {
+export function FileCard({ file, onRename , onFileRemove }: FileCardProps) {
   const [newFileId, setNewFileId] = useState<string | null>(null);
   const { selectedFolderId } = useFolder();
+  const handleFileRemove = (correlationGuid: string) => {
+    onFileRemove(correlationGuid); };
 
   const truncateText = (text: string, maxLength: number) => {
     if (!text) return "No description";
@@ -28,8 +31,6 @@ export function FileCard({ file, onRename }: FileCardProps) {
       console.error("Invalid new name provided for renaming.");
       return;
     }
-
-    debugger
     onRename(fileId, newName.trim()); // Call the parent's rename function
     setNewFileId(fileId);
     setTimeout(() => {
@@ -40,9 +41,20 @@ export function FileCard({ file, onRename }: FileCardProps) {
 
   const [files, setFiles] = useState<File[]>([]); // Assuming your files are in a state like this
 
-  const handleFileRemove = (correlationGuid: string) => {
-    setFiles(prevFiles => prevFiles.filter(file => file.correlationGuid !== correlationGuid));
+  // const handleFileRemove = (correlationGuid: string) => {
+  //   debugger
+  //   //setFiles(prevFiles => prevFiles.filter(file => file.correlationGuid !== correlationGuid));
+  //   setFiles((prevFiles) => prevFiles.filter((file) => file.correlationGuid !== correlationGuid));
+  // };
+
+
+  const formatFileSize = (sizeInBytes: number): string => {
+    const sizeInMB = sizeInBytes / (1024 * 1024);
+    return sizeInMB >= 1
+      ? sizeInMB.toFixed(2) + " MB"
+      : (sizeInBytes / 1024).toFixed(2) + " KB";
   };
+  
 
   return (
     <Card className="w-full min-h-[200px] flex flex-col nx-card">
@@ -50,7 +62,7 @@ export function FileCard({ file, onRename }: FileCardProps) {
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             {/* Ensure FileIcon handles missing types gracefully */}
-            <FileIcon type={file.type?.toLowerCase() || "unknown"} className="file-icon flex-shrink-0" />
+            <FileIcon type={(file.type || "").toLowerCase() || "unknown"} className="file-icon flex-shrink-0" />
             <div className="min-w-0">
               <TooltipProvider>
                 <Tooltip>
@@ -62,7 +74,7 @@ export function FileCard({ file, onRename }: FileCardProps) {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              <p className="text-xs text-muted-foreground">{file.size} MB</p>
+              <p className="text-xs text-muted-foreground">{file.size}</p>
             </div>
           </div>
           <ShareMenu

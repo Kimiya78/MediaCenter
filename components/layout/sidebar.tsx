@@ -5,25 +5,29 @@ import Link from "next/link";
 import { useState } from "react";
 import NexxFetch from "@/hooks/response-handling";
 import { FolderItem } from "@/types/type";
-import { useFolder } from "@/components/folder-manager/context";
+import { useFolder } from "@/components/folder-manager/context"; // Import useFolder
 import ConfigURL from "@/config";
 import FolderContextMenu from "@/components/folder-manager/folder-contextMenu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useDirection } from "@/components/folder-manager/context"
+
+
 
 export function Sidebar() {
   const navigationItemsUrl = `${ConfigURL.baseUrl}/get-allFolder`;
   const [expandedFolders, setExpandedFolders] = useState<Set<number>>(new Set());
-  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; folderId: number | null, ParentFolderID: number | null , folderName : string} | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; folderId: number | null, ParentFolderID: number | null, folderName: string } | null>(null);
   const [announcement, setAnnouncement] = useState<{ oldName: string; newName: string } | null>(null);
   const [folderList, setFolderList] = useState<FolderItem[]>([]); // Local state for folder list
+  const { dir } = useDirection();
 
   const { data, isLoading, error } = NexxFetch.useGetData<{ folders: FolderItem[] }>(
     navigationItemsUrl,
     ["Folders"]
   );
 
-  const { setSelectedFolderId: updateContextFolder, setSelectedFoldersArray } = useFolder();
+  // Use selectedFolderId and setSelectedFolderId from the context
+  const { selectedFolderId, setSelectedFolderId, setSelectedFoldersArray } = useFolder();
 
   if (isLoading) return <p>Loading folders...</p>;
   if (error) return <p>Error loading folders: {error.message}</p>;
@@ -45,7 +49,6 @@ export function Sidebar() {
     }
     return acc;
   }, {} as { [key: number]: FolderItem & { permissions: (number | null)[] } });
-
 
   const buildFolderTree = (folders: typeof uniqueFolders) => {
     const tree: (FolderItem & { children: any[] })[] = [];
@@ -69,7 +72,6 @@ export function Sidebar() {
     return tree;
   };
 
-
   const toggleFolder = (folderId: number) => {
     setExpandedFolders((prev) => {
       const next = new Set(prev);
@@ -82,12 +84,10 @@ export function Sidebar() {
     });
   };
 
-
-  const handleRightClick = (event: React.MouseEvent, folderId: number, ParentFolderID: number , folderName : string) => {
+  const handleRightClick = (event: React.MouseEvent, folderId: number, ParentFolderID: number, folderName: string) => {
     event.preventDefault();
-    setContextMenu({ x: event.pageX, y: event.pageY, folderId, ParentFolderID , folderName });
+    setContextMenu({ x: event.pageX, y: event.pageY, folderId, ParentFolderID, folderName });
   };
-
 
   const folderTree = buildFolderTree(uniqueFolders);
 
@@ -105,7 +105,7 @@ export function Sidebar() {
         break;
       }
     }
-                                                          
+
     return selectedFolders;
   };
 
@@ -113,26 +113,25 @@ export function Sidebar() {
     return folders.map((folder) => {
       const isExpanded = expandedFolders.has(folder.FolderID);
       const hasChildren = folder.children && folder.children.length > 0;
-      const isSelected = folder.FolderID === selectedFolderId;
+      const isSelected = folder.FolderID === selectedFolderId; // Use selectedFolderId from context
 
       return (
-        <div key={folder.FolderID} className="ml-3 nx-sideBar pr-4 rtl:pr-4 ">
+        <div key={folder.FolderID} className="ml-3 nx-sideBar pr-4 rtl:pr-4">
           <div
-              className={`flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer 
-                transition-all 
-                ${isSelected ? "bg-muted w-full" : ""}
-              `}
-              style={{
-                width: "100%", 
-              }}
-              onClick={() => {
-                setSelectedFolderId(folder.FolderID);
-                updateContextFolder(folder.FolderID);
-                const parentFolders = getParentFolders(folder.FolderID, uniqueFolders);
-                setSelectedFoldersArray(parentFolders);
-              }}
-              onContextMenu={(e) => handleRightClick(e, folder.FolderID, folder.ParentFolderID, folder.FolderName)}
-            >
+            className={`flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer 
+              transition-all 
+              ${isSelected ? "bg-muted w-full" : ""}
+            `}
+            style={{
+              width: "100%",
+            }}
+            onClick={() => {
+              setSelectedFolderId(folder.FolderID); // Update selectedFolderId in context
+              const parentFolders = getParentFolders(folder.FolderID, uniqueFolders);
+              setSelectedFoldersArray(parentFolders); // Update breadcrumb
+            }}
+            onContextMenu={(e) => handleRightClick(e, folder.FolderID, folder.ParentFolderID, folder.FolderName)}
+          >
             <div className="flex items-center gap-2" onClick={() => hasChildren && toggleFolder(folder.FolderID)}>
               {hasChildren && (
                 <div className="w-4 h-4">
@@ -144,9 +143,6 @@ export function Sidebar() {
                 </div>
               )}
               <FolderClosed className="w-4 h-4" />
-              {/* <Link href="#">
-                <span className={folder.PasswordRequired ? "text-red-500" : ""}>{folder.FolderName}</span>
-              </Link> */}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -163,8 +159,6 @@ export function Sidebar() {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-
-
             </div>
           </div>
           {hasChildren && isExpanded && <div className="ml-3">{renderFolderTree(folder.children)}</div>}
@@ -173,12 +167,10 @@ export function Sidebar() {
     });
   };
 
-  
-
   return (
     <div className="w-64 h-screen border-r bg-background text-foreground">
       <div className="p-4 flex flex-col h-full">
-        <h1 className="text-xl font-bold mb-8">Folders</h1>
+        <h1 className="text-xl font-bold mb-8">{dir === "rtl" ? "پوشه ها" : "Folders"}</h1>
         <nav className="space-y-2">{renderFolderTree(folderTree)}</nav>
       </div>
 
@@ -190,25 +182,22 @@ export function Sidebar() {
           parentFolderId={contextMenu.ParentFolderID}
           onClose={() => setContextMenu(null)}
           onFolderUpdate={(newName) => {
-            // Update the folder name in the local state
             setFolderList((prevFolders) =>
               prevFolders.map((folder) =>
                 folder.FolderID === contextMenu.folderId ? { ...folder, FolderName: newName } : folder
               )
             );
-            setAnnouncement({ oldName: contextMenu.folderName , newName });
+            setAnnouncement({ oldName: contextMenu.folderName, newName });
           }}
           onFolderDelete={(folderId) => {
-            // Remove the folder from the local state
             setFolderList((prevFolders) => prevFolders.filter((folder) => folder.FolderID !== folderId));
-            setAnnouncement(null); // Optionally, you can set an announcement for deletion
+            setAnnouncement(null);
           }}
           setAnnouncement={setAnnouncement}
           folderName={folderList.find(folder => folder.FolderID === contextMenu.folderId)?.FolderName || ""}
         />
       )}
 
-      {/* Announcement Section */}
       {announcement && (
         <div className="fixed bottom-4 left-4 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 z-50">
           <span>

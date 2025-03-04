@@ -9,6 +9,8 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { useUploadFile } from "@/hooks/use-upload-file";
 import { useFolder } from "@/components/folder-manager/context";
+import { useDirection } from "@/components/folder-manager/context"
+
 
 
 interface UploadDialogProps {
@@ -26,6 +28,9 @@ export function UploadDialog({ isOpen, onClose, onUpload, destination }: UploadD
   const [progress, setProgress] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const { uploadFile } = useUploadFile();
+
+  const { dir } = useDirection();
+
 
   // Get the selectedFolderId from the context
   const { selectedFolderId } = useFolder();
@@ -112,7 +117,7 @@ export function UploadDialog({ isOpen, onClose, onUpload, destination }: UploadD
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <div className="space-y-0.5">
-            <DialogTitle>Upload File</DialogTitle>
+            <DialogTitle>{dir === "rtl" ? "بارگذاری فایل " : "Upload File"}</DialogTitle>
             {destination && <p className="text-sm text-muted-foreground">Uploading to: {destination}</p>}
           </div>
         </DialogHeader>
@@ -153,20 +158,20 @@ export function UploadDialog({ isOpen, onClose, onUpload, destination }: UploadD
                 accept="*/*"
               />
               <p className="text-sm text-muted-foreground">
-                Drag and drop a file here, or click to select
+                {dir === "rtl" ? "یک فایل را در اینجا بکشید و سپس رها کنید یا برای انتخاب کلیک کنید" : "Drag and drop a file here, or click to select "}
               </p>
             </div>
           )}
 
           <div className="grid gap-2">
             <label htmlFor="description" className="text-sm font-medium">
-              Description (required)
+              {dir === "rtl" ? "توضیحات (اجباری)" : "Description (required)"}
             </label>
             <Textarea 
               id="description" 
               value={description} 
               onChange={(e) => setDescription(e.target.value)} 
-              placeholder="Enter a description for the file"
+              placeholder={dir === "rtl" ? "توضیحات  فایل را وارد کنید" : "Enter a description for the file"}
               rows={3} 
             />
           </div>
@@ -185,7 +190,8 @@ export function UploadDialog({ isOpen, onClose, onUpload, destination }: UploadD
             disabled={!selectedFile || !description || uploading || !selectedFolderId} 
             className="w-full"
           >
-            {uploading ? "Uploading..." : "Upload"}
+            {/* {uploading ? "Uploading..." : "Upload"} */}
+            {dir === "rtl" ? "بارگذاری  " : "Upload File"}
           </Button>
         </div>
       </DialogContent>

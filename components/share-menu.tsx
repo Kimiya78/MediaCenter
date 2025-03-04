@@ -18,6 +18,8 @@ import ConfigURL from "@/config";
 import { ViewerDialog } from "@/components/viewer-dialog"
 import { PasswordDialog } from "@/components/password-dialog";
 import LinksDialog  from "@/components/links-dialog";
+import { useDirection } from "@/components/folder-manager/context"
+
 
 interface ShareMenuProps {
   fileId: string;
@@ -63,6 +65,7 @@ export function ShareMenu({
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const correctPassword = "";
+  const { dir } = useDirection();
 
   const handlePasswordSubmit = (enteredPass: string) => {
     console.log("Password entered:", enteredPass);
@@ -87,6 +90,7 @@ export function ShareMenu({
   
   const handleDownload = async () => {
     try {
+      debugger
       const downloadUrl = `${ConfigURL.baseUrl}/downloading_file`;
 
       const response = await axios.post(
@@ -108,9 +112,10 @@ export function ShareMenu({
       const contentDisposition = response.headers["content-disposition"] || "";
       const videoTypes = ["mp4", "webm", "ogg", "avi", "mkv", "quicktime", "video/mp4"];
       const isVideo = videoTypes.some((type) => contentType.includes(type));
+      debugger
 
       const filename = contentDisposition
-        ? contentDisposition.split("filename=")[1]?.replace(/"/g, "")
+        ? contentDisposition.match(/filename="?([^"]+)"?/)?.[1]  //contentDisposition.match(/filename="([^"]+)"/)?.[1] 
         : fileName;
 
       if (isVideo) {
@@ -153,7 +158,7 @@ export function ShareMenu({
   const handleShare = async () => {
     try {
       // ✅ New share URL using correlationGuid
-      const shareUrl = `${ConfigURL.baseUrl}/share?CorrelationGUID=${encodeURIComponent(correlationGuid)}`;
+      const shareUrl = `https://cloud.cinnagen.com/share?CorrelationGUID=${encodeURIComponent(correlationGuid)}`;
       
       const shareMessage = `این فایل مورد نظر جهت دانلود میباشد: ${shareUrl}`;
   
@@ -206,6 +211,10 @@ export function ShareMenu({
     }
   };
   
+
+  const handleFileRemove = (correlationGuid) => {
+    setFiles((prevFiles) => prevFiles.filter((file) => file.correlationGuid !== correlationGuid));
+  };
 
 
   // **Manage delete file**
@@ -264,6 +273,7 @@ export function ShareMenu({
     }
   };
 
+
   return (
     <>
       <DropdownMenu>
@@ -271,52 +281,52 @@ export function ShareMenu({
         <DropdownMenuContent align="end" className="w-[200px] cursor-pointer">
           <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
             <Share2 className="mr-2 h-4 w-4  " />
-            Share
+            {dir === "rtl" ? "اشتراک" : "Share"}
             {/* <DropdownMenuShortcut>⌃⌥A</DropdownMenuShortcut> */}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleDownload} className="cursor-pointer">
             <Download className="mr-2 h-4 w-4" />
-            Download
+            {dir === "rtl" ? "دانلود" : "Download"}
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={handleDelete} className="text-destructive cursor-pointer">
             <Trash className="mr-2 h-4 w-4" />
-            Delete
+             {dir === "rtl" ? "حذف" : "Delete"}
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={() => setRenameDialogOpen(true)} className="cursor-pointer">
             <Edit2 className="mr-2 h-4 w-4" />
-            Rename
+             {dir === "rtl" ? "ویرایش" : "Rename"}
             <DropdownMenuShortcut> </DropdownMenuShortcut>
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={handleViewer} className="cursor-pointer">
             <Eye className="mr-2 h-4 w-4" />
-            Viewer
+             {dir === "rtl" ? "سوابق مشاهده" : "Viewer"}
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={onLockToggle} className="cursor-pointer">
             {requiresPassword ? (
               <>
                 <Lock className="mr-2 h-4 w-4 text-red-500" />
-                Locked
+                 {dir === "rtl" ? "قفل" : "Lock"}
               </>
             ) : (
               <>
                 <Unlock className="mr-2 h-4 w-4 text-green-500" />
-                Unlocked
+                 {dir === "rtl" ? "ازاد" : "Unlock"}
               </>
             )}
           </DropdownMenuItem>
-
+{/* 
           <DropdownMenuItem onClick={handlePasswordSubmit} className="cursor-pointer">
             <Key className="mr-2 h-4 w-4" />
             <button onClick={() => setIsDialogOpen(true)}>       pass      </button>
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
 
           <DropdownMenuItem onClick={handleLinksClick} className="cursor-pointer">
             <Link className="mr-2 h-4 w-4" />
-            Links
+            {dir === "rtl" ? "لینک ها" : "Links"}
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
@@ -361,7 +371,7 @@ export function ShareMenu({
       
       {/* Links Dialog */}
       {isLinksDialogOpen && (
-        <LinksDialog isOpen={isLinksDialogOpen} onClose={closeLinksDialog} fileGUID={correlationGuid} />
+        <LinksDialog isOpen={isLinksDialogOpen} onClose={closeLinksDialog} fileGUID={correlationGuid} AttachmentUrlGuid={attachmentUrlGuid} FileID={fileId} fileName={fileName} />
       )}
 
     </> 

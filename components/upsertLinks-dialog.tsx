@@ -31,16 +31,18 @@ export function UpsertLinksDialog({ attachmentURLGUID, correlationGuid, mode }) 
   const { mutate: fetchLinkData, data, isLoading, isError } = NexxFetch.usePostData<
     { ExpiresOnDate: string; PasswordHash: string; IsAnonymous: boolean; Inactive: boolean },
     { FileGUID: string }
-  >(`${ConfigURL.baseUrl}/get_url`);
+  >(`${ConfigURL.baseUrl}/get_url?FileGUID=${correlationGuid}?AttachmentURLGUID=${attachmentURLGUID}`);
 
   useEffect(() => {
     if (mode === "u" && correlationGuid) {
+      console.log("Fetching data for correlationGuid:", correlationGuid);
       fetchLinkData({ FileGUID: correlationGuid });
     }
   }, [mode, correlationGuid, fetchLinkData]);
 
   useEffect(() => {
     if (data?.data) {
+      console.log("Fetched data:", data.data);
       setExpiresOn(data.data.ExpiresOnDate || "");
       setPassword(data.data.PasswordHash || "");
       setIsAnonymous(data.data.IsAnonymous);
@@ -128,40 +130,42 @@ export function UpsertLinksDialog({ attachmentURLGUID, correlationGuid, mode }) 
         <div className="grid gap-4 py-4">
           {isLoading && <p>{dir === "rtl" ? "در حال بارگذاری..." : "Loading..."}</p>}
           {isError && <p>{dir === "rtl" ? "خطا در دریافت داده‌ها" : "Error fetching data"}</p>}
-          {createMutation.isError && <p>{dir === "rtl" ? "خطا در ایجاد لینک" : "Error creating link"}</p>}
-          {updateMutation.isError && <p>{dir === "rtl" ? "خطا در به‌روزرسانی لینک" : "Error updating link"}</p>}
+          {!isLoading && !isError && (
+            <>
+              {/* Expires On Date */}
+              debugger
+              <div className="grid gap-2">
+                <Label htmlFor="expiresOn">{dir === "rtl" ? "تاریخ انقضا:" : "Expires On Date:"}</Label>
+                <Input type="date" id="expiresOn" value={expiresOn} onChange={(e) => setExpiresOn(e.target.value)} />
+              </div>
 
-          {/* Expires On Date */}
-          <div className="grid gap-2">
-            <Label htmlFor="expiresOn">{dir === "rtl" ? "تاریخ انقضا:" : "Expires On Date:"}</Label>
-            <Input type="date" id="expiresOn" value={expiresOn} onChange={(e) => setExpiresOn(e.target.value)} />
-          </div>
+              {/* Password */}
+              <div className="grid gap-2">
+                <Label htmlFor="password">{dir === "rtl" ? "رمز عبور:" : "Password:"}</Label>
+                <Input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isAnonymous}
+                  className={isAnonymous ? "opacity-50 cursor-not-allowed" : ""}
+                />
+              </div>
 
-          {/* Password */}
-          <div className="grid gap-2">
-            <Label htmlFor="password">{dir === "rtl" ? "رمز عبور:" : "Password:"}</Label>
-            <Input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isAnonymous}
-              className={isAnonymous ? "opacity-50 cursor-not-allowed" : ""}
-            />
-          </div>
+              {/* Is Anonymous */}
+              <div className="flex items-center space-x-2">
+                <Checkbox id="isAnonymous" checked={isAnonymous} onCheckedChange={setIsAnonymous} />
+                <Label htmlFor="isAnonymous">{dir === "rtl" ? " دسترسی همگانی ؟" : "Is Anonymous?"}</Label>
+              </div>
 
-          {/* Is Anonymous */}
-          <div className="flex items-center space-x-2">
-            <Checkbox id="isAnonymous" checked={isAnonymous} onCheckedChange={setIsAnonymous} />
-            <Label htmlFor="isAnonymous">{dir === "rtl" ? "بی‌نام؟" : "Is Anonymous?"}</Label>
-          </div>
-
-          {/* Disable (Only in Update Mode) */}
-          {mode === "u" && (
-            <div className="flex items-center space-x-2">
-              <Checkbox id="disable" checked={disable} onCheckedChange={setDisable} />
-              <Label htmlFor="disable">{dir === "rtl" ? "غیرفعال؟" : "Disable?"}</Label>
-            </div>
+              {/* Disable (Only in Update Mode) */}
+              {mode === "u" && (
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="disable" checked={disable} onCheckedChange={setDisable} />
+                  <Label htmlFor="disable">{dir === "rtl" ? " غیرفعال ؟" : "Disable?"}</Label>
+                </div>
+              )}
+            </>
           )}
         </div>
 
