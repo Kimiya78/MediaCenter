@@ -200,9 +200,10 @@ export function Sidebar() {
 
       {announcement && (
         <div className="fixed bottom-4 left-4 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 z-50">
-          <span>
-            "{announcement.oldName}" renamed to "{announcement.newName}"
-          </span>
+          {/* const a = `${announcement.oldName} renamed to ${announcement.newName}`;
+          const b = `${announcement.newName} تغییر یافت به ${announcement.oldName}`; */}
+
+          <span>{dir === "rtl" ? `( ${announcement.newName} ) تغییر یافت به ( ${announcement.oldName} )` : `( ${announcement.oldName} ) renamed to ( ${announcement.newName} )`}</span>
           <button
             onClick={() => setAnnouncement(null)}
             className="hover:bg-gray-800 p-1 rounded"

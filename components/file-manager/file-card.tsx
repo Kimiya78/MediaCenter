@@ -7,6 +7,8 @@ import { ShareMenu } from "../share-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
 import { FolderProvider, useFolder ,DirectionProvider } from "@/components/folder-manager/context"; 
+import { useDirection } from "@/components/folder-manager/context"
+
 
 interface FileCardProps {
   file: FileItem;
@@ -37,15 +39,7 @@ export function FileCard({ file, onRename , onFileRemove }: FileCardProps) {
       setNewFileId(null);
     }, 2000);
   };
-
-
-  const [files, setFiles] = useState<File[]>([]); // Assuming your files are in a state like this
-
-  // const handleFileRemove = (correlationGuid: string) => {
-  //   debugger
-  //   //setFiles(prevFiles => prevFiles.filter(file => file.correlationGuid !== correlationGuid));
-  //   setFiles((prevFiles) => prevFiles.filter((file) => file.correlationGuid !== correlationGuid));
-  // };
+  debugger
 
 
   const formatFileSize = (sizeInBytes: number): string => {
@@ -55,6 +49,7 @@ export function FileCard({ file, onRename , onFileRemove }: FileCardProps) {
       : (sizeInBytes / 1024).toFixed(2) + " KB";
   };
   
+  const { dir } = useDirection();
 
   return (
     <Card className="w-full min-h-[200px] flex flex-col nx-card">
@@ -96,19 +91,19 @@ export function FileCard({ file, onRename , onFileRemove }: FileCardProps) {
       <CardContent className="p-3 pt-0">
         <div className="grid gap-1.5 text-xs">
           <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Type</span>
+            <span className="text-muted-foreground">{dir === "rtl" ? "نوع" : "Type"}</span>
             <span className="font-medium capitalize">{file.type || "Unknown"}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Date</span>
+            <span className="text-muted-foreground">{dir === "rtl" ? "تاریخ ایجاد" : "Date"}</span>
             <span className="font-medium">{file.createdDate}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Created by</span>
+            <span className="text-muted-foreground">{dir === "rtl" ? "ایجادکننده" : "Created by"}</span>
             <span className="font-medium truncate max-w-[120px]">{file.createdBy}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Description</span>
+            <span className="text-muted-foreground">{dir === "rtl" ? "توضیحات" : "Description"}</span>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>

@@ -23,8 +23,9 @@ import { useDirection } from "@/components/folder-manager/context"
 import ConfigURL  from "@/config"
 import '@/app/globals.css'
 import NexxFetch from "@/hooks/response-handling"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 
 
@@ -137,8 +138,10 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
       docx: ["docx"],
       xlsx: ["xlsx"],
       png: ["png"],
-      jpg: ["jpg", "Jpg"],
+      jpg: ["jpg", "Jpg" ],
+      jpeg : ["jpeg"],
       videos: ["mp4", "mov", "avi"],
+      txt: ["txt"],
     };
 
     return nameMatch && typeMap[fileType]?.includes((file.type || "").toLowerCase());
@@ -283,36 +286,47 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
     )
   }
 
+
   const renderTableBody = () => {
     return sortedFiles.map((file) => (
       <tr key={file.id} className="border-b hover:bg-muted/50">
         {["name", "type", "size", "createdBy", "createdDate"].map((field) => (
           <td key={field} className={`px-4 py-3 persian-text ${dir === "rtl" ? "text-right" : "text-left"}`}>
-            {file[field as keyof FileItem]}
+            {field === "createdBy" ? (
+              <div className="flex items-center gap-2">
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={file.createdByAvatar} alt={file.createdBy} />
+                  <AvatarFallback>{file.createdBy?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <span className="font-medium truncate max-w-[120px]">{file.createdBy}</span>
+              </div>
+            ) : (
+              file[field as keyof FileItem]
+            )}
           </td>
         ))}
-        <td className="px-4 py-3 text-right ">
-
-            <ShareMenu
-              fileId={file.id}
-              fileName={file.name} // ✅ This updates when state changes
-              fileDescription={file.description}
-              fileSize={file.size.toString()}
-              uploadedBy={file.createdBy}
-              uploadedOn={file.createdDate}
-              attachmentUrlGuid={file.correlationGuid}
-              correlationGuid={file.correlationGuid}
-              folderId={selectedFolderId}
-              requiresPassword={false}
-              trigger={<MoreVertical className="h-4 w-4 cursor-pointer" />}
-              isLocked={file.isLocked}
-              onRename={handleRenameFile} // ✅ Passes update function correctly
-              onFileRemove={handleFileRemove}
-            />
+        <td className="px-4 py-3 text-right">
+          <ShareMenu
+            fileId={file.id}
+            fileName={file.name}
+            fileDescription={file.description}
+            fileSize={file.size.toString()}
+            uploadedBy={file.createdBy}
+            uploadedOn={file.createdDate}
+            attachmentUrlGuid={file.correlationGuid}
+            correlationGuid={file.correlationGuid}
+            folderId={selectedFolderId}
+            requiresPassword={false}
+            trigger={<MoreVertical className="h-4 w-4 cursor-pointer" />}
+            isLocked={file.isLocked}
+            onRename={handleRenameFile}
+            onFileRemove={handleFileRemove}
+          />
         </td>
       </tr>
-    ))
-  }
+    ));
+  };
+  
 
   
   const handlePageChange = (newPage: number) => {
@@ -358,6 +372,7 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
                 <SelectItem value="xlsx">{dir === "rtl" ? "xlsx" : "xlsx"}</SelectItem>
                 <SelectItem value="png">{dir === "rtl" ? "png" : "png"}</SelectItem>
                 <SelectItem value="jpg" >{dir === "rtl" ? "jpg" : "jpg"}</SelectItem>
+                <SelectItem value="txt" >{dir === "rtl" ? "txt" : "txt"}</SelectItem>
                 {/* <SelectItem value="images">{dir === "rtl" ? "تصاویر" : "Images"}</SelectItem> */}
                 <SelectItem value="videos">{dir === "rtl" ? "ویدیوها" : "Videos"}</SelectItem>
               </SelectContent>
