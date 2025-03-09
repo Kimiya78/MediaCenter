@@ -19,6 +19,7 @@ import { ViewerDialog } from "@/components/viewer-dialog"
 import { PasswordDialog } from "@/components/password-dialog";
 import LinksDialog  from "@/components/links-dialog";
 import { useDirection } from "@/components/folder-manager/context"
+import { useTranslation } from "react-i18next";
 
 
 interface ShareMenuProps {
@@ -30,8 +31,8 @@ interface ShareMenuProps {
   uploadedOn: string;
   attachmentUrlGuid: string; 
   correlationGuid: string; 
-  folderId: string; 
-  requiresPassword: boolean; 
+  folderId: string;
+  requiresPassword: boolean;
   trigger: React.ReactNode;
   isLocked?: boolean;
   onLockToggle?: () => void;
@@ -58,6 +59,7 @@ export function ShareMenu({
   onRename,
   onFileRemove,
 }: ShareMenuProps) {
+  const { t } = useTranslation();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [viewerData, setViewerData] = useState<any[]>([]);
@@ -278,55 +280,49 @@ export function ShareMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[200px] cursor-pointer">
-          <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
-            <Share2 className="mr-2 h-4 w-4  " />
-            {dir === "rtl" ? "اشتراک" : "Share"}
-            {/* <DropdownMenuShortcut>⌃⌥A</DropdownMenuShortcut> */}
+        <DropdownMenuContent align="end" className={`w-[160px] cursor-pointer  ${dir === "rtl" ? "text-right" : "text-left"}`}>
+          <DropdownMenuItem onClick={handleShare} className={`cursor-pointer flex ${dir === "rtl" ? "flex-row-reverse" : "flex-row"}`}>
+            <Share2 className={`${dir === "rtl" ? "ml-2" : "mr-2"} h-4 w-4`} />
+            {t('menu.share')}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleDownload} className="cursor-pointer">
-            <Download className="mr-2 h-4 w-4" />
-            {dir === "rtl" ? "دانلود" : "Download"}
-          </DropdownMenuItem>
-
-          <DropdownMenuItem onClick={handleDelete} className="text-destructive cursor-pointer">
-            <Trash className="mr-2 h-4 w-4" />
-             {dir === "rtl" ? "حذف" : "Delete"}
+          <DropdownMenuItem onClick={handleDownload} className={`cursor-pointer flex ${dir === "rtl" ? "flex-row-reverse" : "flex-row"}`}>
+            <Download className={`${dir === "rtl" ? "ml-2" : "mr-2"} h-4 w-4`} />
+            {t('menu.download')}
           </DropdownMenuItem>
 
-          <DropdownMenuItem onClick={() => setRenameDialogOpen(true)} className="cursor-pointer">
-            <Edit2 className="mr-2 h-4 w-4" />
-             {dir === "rtl" ? "ویرایش" : "Rename"}
+          <DropdownMenuItem onClick={handleDelete} className={`text-destructive cursor-pointer flex ${dir === "rtl" ? "flex-row-reverse" : "flex-row"}`}>
+            <Trash className={`${dir === "rtl" ? "ml-2" : "mr-2"} h-4 w-4`} />
+            {t('menu.delete')}
+          </DropdownMenuItem>
+
+          <DropdownMenuItem onClick={() => setRenameDialogOpen(true)} className={`cursor-pointer flex ${dir === "rtl" ? "flex-row-reverse" : "flex-row"}`}>
+            <Edit2 className={`${dir === "rtl" ? "ml-2" : "mr-2"} h-4 w-4`} />
+            {t('menu.rename')}
             <DropdownMenuShortcut> </DropdownMenuShortcut>
           </DropdownMenuItem>
 
-          <DropdownMenuItem onClick={handleViewer} className="cursor-pointer">
-            <Eye className="mr-2 h-4 w-4" />
-             {dir === "rtl" ? "سوابق مشاهده" : "Viewer"}
+          <DropdownMenuItem onClick={handleViewer} className={`cursor-pointer flex ${dir === "rtl" ? "flex-row-reverse" : "flex-row"}`}>
+            <Eye className={`${dir === "rtl" ? "ml-2" : "mr-2"} h-4 w-4`} />
+            {t('menu.viewer')}
           </DropdownMenuItem>
 
-          <DropdownMenuItem onClick={onLockToggle} className="cursor-pointer">
+          <DropdownMenuItem onClick={onLockToggle} className={`cursor-pointer flex ${dir === "rtl" ? "flex-row-reverse" : "flex-row"}`}>
             {requiresPassword ? (
               <>
-                <Lock className="mr-2 h-4 w-4 text-red-500" />
-                 {dir === "rtl" ? "قفل" : "Lock"}
+                <Lock className={`${dir === "rtl" ? "ml-2" : "mr-2"} h-4 w-4 text-red-500`} />
+                {t('menu.lock')}
               </>
             ) : (
               <>
-                <Unlock className="mr-2 h-4 w-4 text-green-500" />
-                 {dir === "rtl" ? "ازاد" : "Unlock"}
+                <Unlock className={`${dir === "rtl" ? "ml-2" : "mr-2"} h-4 w-4 text-green-500`} />
+                {t('menu.unlock')}
               </>
             )}
           </DropdownMenuItem>
-{/* 
-          <DropdownMenuItem onClick={handlePasswordSubmit} className="cursor-pointer">
-            <Key className="mr-2 h-4 w-4" />
-            <button onClick={() => setIsDialogOpen(true)}>       pass      </button>
-          </DropdownMenuItem> */}
 
-          <DropdownMenuItem onClick={handleLinksClick} className="cursor-pointer">
-            <Link className="mr-2 h-4 w-4" />
-            {dir === "rtl" ? "لینک ها" : "Links"}
+          <DropdownMenuItem onClick={handleLinksClick} className={`cursor-pointer flex ${dir === "rtl" ? "flex-row-reverse" : "flex-row"}`}>
+            <Link className={`${dir === "rtl" ? "ml-2" : "mr-2"} h-4 w-4`} />
+            {t('menu.links')}
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />

@@ -1,0 +1,83 @@
+{
+    "tableHeaders": {
+      "name": "نام",
+      "type": "نوع",
+      "size": "حجم",
+      "createdBy": "ایجاد شده توسط",
+      "createdDate": "تاریخ ایجاد"
+    },
+    "fileCard": {
+      "type": "نوع",
+      "date": "تاریخ",
+      "createdBy": "ایجاد شده توسط",
+      "description": "توضیحات",
+      "noDescription": "بدون توضیحات"
+    },
+    "buttons": {
+      "upload": "آپلود",
+      "searchPlaceholder": "جستجوی فایل‌ها...",
+      "goTo": "برو به"
+    },
+    "fileTypes": {
+        "all": "همه",
+        "pptx": "PPTX",
+        "pdf": "PDF",
+        "docx": "DOCX",
+        "xlsx": "XLSX",
+        "png": "PNG",
+        "jpg": "JPG",
+        "txt": "TXT",
+        "videos": "ویدیوها"
+    },
+    "pagination": {
+        "previous": "قبلی",
+        "next": "بعدی"
+    },
+    "sharingDialog": {
+        "title": "اشتراک گذاری فایل",
+        "fileName": "نام فایل",
+        "fileSize": "حجم فایل",
+        "fileDescription": "تتتوضیحات",
+        "uploadedBy": "بارگذاری شده توسط",
+        "uploadedOn": "تاریخ بارگذاری",
+        "downloadFile": "دریافت فایل",
+        "loading": "در حال بارگذاری اطلاعات فایل...",
+        "downloading": "در حال دریافت..."
+    },
+    "menu": {
+      "share": "اشتراک",
+      "download": "دانلود",
+      "delete": "حذف",
+      "rename": "ویرایش",
+      "viewer": "سوابق مشاهده",
+      "lock": "قفل",
+      "unlock": "آزاد",
+      "links": "لینک ها"
+    },
+    "createDialog": {
+      "title": "ایجاد پوشه جدید",
+      "folderName": "نام پوشه",
+      "folderNamePlaceholder": "نام پوشه را وارد کنید",
+      "description": "توضیحات",
+      "descriptionPlaceholder": "توضیحات پوشه را وارد کنید",
+      "password": "رمز عبور (اختیاری)",
+      "passwordPlaceholder": "رمز عبور پوشه را وارد کنید",
+      "cancel": "انصراف",
+      "create": "ایجاد"
+    },
+    "viewerDialog": {
+        "title": "مشاهده کنندگان",
+        "person": " کاربر",
+        "downloadedAt": " دریافت شده در تاریخ",
+        "close": "خروج", 
+        "noViewersAvailable": "هیچ کاربری برای مشاهده وجود ندارد."
+      },
+      "renameDialog": {
+        "title": "ویرایش ",
+        "newName": "نام جدید",
+        "newNamePlaceholder": "نام جدید را وارد کنید",
+        "cancel": "انصراف",
+        "rename": "ویرایش"
+      }
+}
+  

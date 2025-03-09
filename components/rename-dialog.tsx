@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useTranslation } from "react-i18next"
+import { useDirection } from "@/components/folder-manager/context"
+
 
 interface RenameDialogProps {
   isOpen: boolean
@@ -36,32 +39,35 @@ export function RenameDialog({
     }
   }
 
+  const { t } = useTranslation()
+  const { dir } = useDirection()
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]" onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
-          <DialogTitle>Rename {objectType}</DialogTitle>
+          <DialogTitle>{dir === 'rtl' ? t("renameDialog.title") : `${t("renameDialog.title")} ${objectType}`}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="newName">New Name</Label>
+            <Label htmlFor="newName">{t("renameDialog.newName")}</Label>
             <Input
               id="newName"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              placeholder="Enter new name"
+              placeholder={t("renameDialog.newNamePlaceholder")}
               autoFocus
             />
           </div>
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+              {t("renameDialog.cancel")}
             </Button>
             <Button
               type="submit"
               disabled={!newName || newName.trim() === "" || newName === objectName}
             >
-              Rename
+              {t("renameDialog.rename")}
             </Button>
           </div>
         </form>

@@ -2,6 +2,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useTranslation } from "react-i18next"
+import { useDirection } from "@/components/folder-manager/context"
 
 interface Viewer {
   CreatedBy: string
@@ -15,7 +17,8 @@ interface ViewerDialogProps {
 }
 
 export function ViewerDialog({ isOpen, onClose, viewerData }: ViewerDialogProps) {
-  
+  const { t } = useTranslation()
+  const { dir } = useDirection()
   const formatDateTime = (dateTime: string): string => {
     if (!dateTime) return ""; // Handle empty or invalid datetime strings
     const dateObject = new Date(dateTime);
@@ -32,41 +35,40 @@ export function ViewerDialog({ isOpen, onClose, viewerData }: ViewerDialogProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="  sm:max-w-[800px]">
-        <DialogHeader>
-          <DialogTitle>Viewers</DialogTitle>
+      <DialogContent className={`sm:max-w-[800px]  [&>button.absolute]:hidden ${dir === 'rtl' ? 'font-[IranYekanBakh] rtl' : ''}`}>
+        <DialogHeader className={dir === 'rtl' ? 'text-right' : ''}>
+          <DialogTitle className={dir === 'rtl' ? 'text-right' : ''}>{t("viewerDialog.title")}</DialogTitle>
         </DialogHeader>
         <div className="max-h-[450px] overflow-y-auto">
-          <Table>
+          <Table className={dir === 'rtl' ? 'text-right' : ''}>
             <TableHeader>
               <TableRow>
-                <TableHead>Person</TableHead>
-                <TableHead>Downloaded At</TableHead>
+                <TableHead className={dir === 'rtl' ? 'text-right pr-4' : ''}>{t("viewerDialog.person")}</TableHead>
+                <TableHead className={dir === 'rtl' ? 'text-right pr-4' : ''}>{t("viewerDialog.downloadedAt")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {viewerData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={2} className="text-center">
-                    No viewers available.
+                  <TableCell colSpan={2} className={`text-center ${dir === 'rtl' ? 'font-[IranYekanBakh]' : ''}`}>
+                    {t("viewerDialog.noViewersAvailable")}
                   </TableCell>
                 </TableRow>
               ) : (
                 viewerData.map((viewer, index) => (
                   <TableRow key={index}>
-                    <TableCell>{viewer.author}</TableCell>
-                    <TableCell>{formatDateTime(viewer.FormattedDateTime)}</TableCell>
+                    <TableCell className={`${dir === 'rtl' ? 'text-right pr-4' : ''}`}>{viewer.author}</TableCell>
+                    <TableCell className={`${dir === 'rtl' ? 'text-right pr-4' : ''}`}>{viewer.DateTime}</TableCell>
                   </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
         </div>
-        <DialogFooter>
-          <Button onClick={onClose}>Close</Button>
+        <DialogFooter className={dir === 'rtl' ? 'justify-start' : ''}>
+          <Button onClick={onClose} className={dir === 'rtl' ? 'font-[IranYekanBakh]' : ''}>{t("viewerDialog.close")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   )
 }
-

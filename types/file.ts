@@ -10,6 +10,10 @@ export interface FileItem {
   createdDate: string
   isLocked?: boolean
   permission: FilePermission
+  description?: string
+  createdByAvatar?: string
+  attachmentUrlGuid?: string
+  requiresPassword?: boolean
 }
 
 export interface SortConfig {

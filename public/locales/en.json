@@ -1,0 +1,83 @@
+{
+    "tableHeaders": {
+      "name": "Name",
+      "type": "Type",
+      "size": "Size",
+      "createdBy": "Created By",
+      "createdDate": "Created Date"
+    },
+    "fileCard": {
+      "type": "Type",
+      "date": "Date",
+      "createdBy": "Created by",
+      "description": "Description",
+      "noDescription": "No description"
+    },
+    "buttons": {
+      "upload": "Upload",
+      "searchPlaceholder": "Search files...",
+      "goTo": "Go to"
+    },
+    "fileTypes": {
+        "all": "All",
+        "pptx": "PPTX",
+        "pdf": "PDF",
+        "docx": "DOCX",
+        "xlsx": "XLSX",
+        "png": "PNG",
+        "jpg": "JPG",
+        "txt": "TXT",
+        "videos": "Videos"
+    },
+    "pagination": {
+        "previous": "Previous",
+        "next": "Next"
+    },
+    "sharingDialog": {
+        "title": "Sharing File",
+        "fileName": "File Name",
+        "fileSize": "File Size",
+        "fileDescription": "Description",
+        "uploadedBy": "Uploaded By",
+        "uploadedOn": "Uploaded On",
+        "downloadFile": "Download File",
+        "loading": "Loading file details...",
+        "downloading": "Downloading..."
+    },
+    "menu": {
+      "share": "Share",
+      "download": "Download",
+      "delete": "Delete",
+      "rename": "Rename",
+      "viewer": "Viewers",
+      "lock": "Lock",
+      "unlock": "Unlock",
+      "links": "Links"
+    },
+    "createDialog": {
+      "title": "Create New Folder",
+      "folderName": "Folder Name",
+      "folderNamePlaceholder": "Enter folder name",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter folder description",
+      "password": "Password (Optional)",
+      "passwordPlaceholder": "Enter folder password",
+      "cancel": "Cancel",
+      "create": "Create"
+    },
+    "viewerDialog": {
+      "title": "Viewers",
+      "person": "Person",
+      "downloadedAt": "Downloaded At",
+      "close": "Close", 
+      "noViewersAvailable": "No viewers available."
+    },
+    "renameDialog": {
+      "title": "Rename ",
+      "newName": "New Name",
+      "cancel": "Cancel",
+      "rename": "Rename"
+    }
+
+}
+  

@@ -1,40 +1,17 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
+// Import translation JSON files
+import enTranslation from "@/public/locales/en.json";
+import faTranslation from "@/public/locales/fa.json";
+
+// Initializing i18n without relying on useDirection directly
 i18n.use(initReactI18next).init({
   resources: {
-    en: {
-      translation: {
-        tableHeaders: {
-          name: "Name",
-          type: "Type",
-          size: "Size",
-          createdBy: "Created By",
-          createdDate: "Created Date",
-        },
-        buttons: {
-          upload: "Upload",
-          searchPlaceholder: "Search files...",
-        },
-      },
-    },
-    fa: {
-      translation: {
-        tableHeaders: {
-          name: "نام فایل",
-          type: "نوع",
-          size: "سایز",
-          createdBy: "ایجاد کننده",
-          createdDate: "تاریخ ایجاد",
-        },
-        buttons: {
-          upload: "آپلود",
-          searchPlaceholder: "جستجوی فایل‌ها...",
-        },
-      },
-    },
+    en: { translation: enTranslation },
+    fa: { translation: faTranslation },
   },
-  lng: "fa", // زبان پیش‌فرض
+  lng: "en", // Default language (will be updated dynamically)
   fallbackLng: "en",
   interpolation: { escapeValue: false },
 });

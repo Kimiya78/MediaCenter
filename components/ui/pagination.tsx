@@ -1,9 +1,9 @@
 import * as React from "react"
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
-
 import { cn } from "@/lib/utils"
 import { ButtonProps, buttonVariants } from "@/components/ui/button"
 import { useDirection } from "@/components/folder-manager/context"
+import { useTranslation } from "react-i18next"
 
 const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
   <nav
@@ -65,6 +65,7 @@ const PaginationPrevious = ({
   ...props
 }: React.ComponentProps<typeof PaginationLink>) => {
   const { dir } = useDirection() // ✅ Hook moved inside the function
+  const { t } = useTranslation()
 
   return (
     <PaginationLink
@@ -74,7 +75,7 @@ const PaginationPrevious = ({
       {...props}
     >
       <ChevronLeft className="h-4 w-4" />
-      <span>{dir === "rtl" ? "قبلی" : "Previous"}</span>
+      <span>{t("pagination.previous")}</span>
     </PaginationLink>
   )
 }
@@ -85,6 +86,7 @@ const PaginationNext = ({
   ...props
 }: React.ComponentProps<typeof PaginationLink>) => {
   const { dir } = useDirection() // ✅ Hook moved inside the function
+  const { t } = useTranslation()
 
   return (
     <PaginationLink
@@ -93,7 +95,7 @@ const PaginationNext = ({
       className={cn("gap-1 pr-2.5", className)}
       {...props}
     >
-      <span>{dir === "rtl" ? "بعدی" : "Next"}</span>
+      <span>{t("pagination.next")}</span>
       <ChevronRight className="h-4 w-4" />
     </PaginationLink>
   )

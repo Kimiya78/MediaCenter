@@ -25,7 +25,11 @@ import '@/app/globals.css'
 import NexxFetch from "@/hooks/response-handling"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useTranslation } from "react-i18next";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toJalali, toJalaliWithTime } from "@/utils/dateConverter";
+import moment from "moment";
+import convertToJalali from "@/hooks/useJalaliDate"
 
 
 
@@ -47,7 +51,7 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
     direction: "asc",
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState<string | null>(null);//useState("");
+  const [searchQuery, setSearchQuery] = useState<string | null>(null);
   const [pageSize, setPageSize] = useState(10);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [goToPage, setGoToPage] = useState("");
@@ -56,8 +60,10 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
   const [error, setError] = useState<string | null>(null);
   const [newFileId, setNewFileId] = useState<string | null>(null);
   const [keyword_search, setKeywordSearch] = useState<string>('');
+  const { t } = useTranslation();
+  const { i18n } = useTranslation();
+
   // NexxFetch API Call
-  //const navigationItemsUrl = `${ConfigURL.baseUrl}/fetch_media?page_number=${currentPage}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${selectedFolderId}`;
   const navigationItemsUrl = `${ConfigURL.baseUrl}/fetch_media?page_number=${currentPage}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${selectedFolderId}&keyword_search=${encodeURIComponent(keyword_search)}`;
 
 
@@ -78,37 +84,95 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
 
   useEffect(() => {
     if (data?.items) {
-      const transformedData: FileItem[] = data.items.map((item) => ({
-        correlationGuid: item.CorrelationGUID,
-        id: item.FileGUID,
-        name: item.FileName,
-        type: item.FileExtension,
-        size: formatFileSize(item.FileSize),
-        createdBy: item.CreatedBy,
-        createdDate: item.CreatedDateTime,
-        description: item.Description,
-        permission: item.allowDeleteFile === "true" ? "owner" : "viewer",
-        isLocked: false,
-      }));
+      const transformedData: FileItem[] = data.items.map((item) => {
+        if (dir === "ltr") {
+          return {
+            correlationGuid: item.CorrelationGUID,
+            id: item.FileGUID,
+            name: item.FileName,
+            type: item.FileExtension,
+            size: formatFileSize(item.FileSize),
+            createdBy: item.CreatedBy,
+            createdDate: item.CreatedDateTime,
+            description: item.Description,
+            permission: item.allowDeleteFile === "true" ? "owner" : "viewer",
+            isLocked: false,
+          };
+        }
+
+        const createdAt = item.CreatedDateTime ? moment(item.CreatedDateTime, "YYYY/MM/DD - HH:mm").format("YYYY/MM/DD - HH:mm") : null;
+        const formattedDate = createdAt ? convertToJalali(createdAt).replace(/(\d{4}\/\d{2}\/\d{2}) - (\d{2}:\d{2})/, "$2 - $1") : "Invalid Date";
+
+        return {
+          correlationGuid: item.CorrelationGUID,
+          id: item.FileGUID,
+          name: item.FileName,
+          type: item.FileExtension,
+          size: formatFileSize(item.FileSize),
+          createdBy: item.CreatedBy,
+          createdDate: formattedDate,
+          description: item.Description,
+          permission: item.allowDeleteFile === "true" ? "owner" : "viewer",
+          isLocked: false,
+        };
+      });
 
       setFiles(transformedData);
       setTotalRecords(data.total_records || 0);
       setPageSize(data.page_size || 10);
-      setError(null); // Clear any previous errors
+      setError(null);
     }
-  }, [data]);
+  }, [data, dir]);
 
-  useEffect(() => {
-    if (fetchError) {
-      setError("Error fetching data. Please try again.");
-      console.error("Fetch error:", fetchError);
+  // Modify the search input handler
+  const handleSearch = (inputValue: string) => {
+    setSearchQuery(inputValue);
+    setKeywordSearch(inputValue);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  // Filtering logic - only for file type, search is handled by API
+  const filteredFiles = files.filter((file) => {
+    if (fileType === "all") return true;
+
+    const typeMap: Record<string, string[]> = {
+      pptx: ["pptx"],
+      pdf: ["pdf"],
+      docx: ["docx"],
+      xlsx: ["xlsx"],
+      png: ["png"],
+      jpg: ["jpg", "Jpg"],
+      jpeg: ["jpeg"],
+      videos: ["mp4", "mov", "avi"],
+      txt: ["txt"],
+    };
+
+    return typeMap[fileType]?.includes((file.type || "").toLowerCase());
+  });
+
+  // Sorting logic
+  const sortedFiles = [...filteredFiles].sort((a, b) => {
+    const aValue = a[sortConfig.key];
+    const bValue = b[sortConfig.key];
+
+    if (typeof aValue === "string" && typeof bValue === "string") {
+      return sortConfig.direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
     }
-  }, [fetchError]);
 
+    if (typeof aValue === "number" && typeof bValue === "number") {
+      return sortConfig.direction === "asc" ? aValue - bValue : bValue - aValue;
+    }
+
+    return 0;
+  });
+
+  // Update refetch dependencies
   useEffect(() => {
-    refetch(); // Refetch data when dependencies change
-  }, [currentPage, pageSize, selectedFolderId, refetch]);
+    refetch();
+  }, [currentPage, pageSize, selectedFolderId, keyword_search]);
 
+
+  
   // ✅ Ensure API call updates with new `keyword_search`
   useEffect(() => {
     refetch(); // Call API when keyword_search changes
@@ -127,41 +191,6 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
   }, [selectedFolderId]);
   
 
-  // Filtering logic (unchanged)
-  const filteredFiles = files.filter((file) => {
-    const nameMatch = (file.name || "").toLowerCase().includes((searchQuery || "").toLowerCase());
-    if (fileType === "all") return nameMatch;
-
-    const typeMap: Record<string, string[]> = {
-      pptx: ["pptx"],
-      pdf: ["pdf"],
-      docx: ["docx"],
-      xlsx: ["xlsx"],
-      png: ["png"],
-      jpg: ["jpg", "Jpg" ],
-      jpeg : ["jpeg"],
-      videos: ["mp4", "mov", "avi"],
-      txt: ["txt"],
-    };
-
-    return nameMatch && typeMap[fileType]?.includes((file.type || "").toLowerCase());
-  });
-
-  // Sorting logic (unchanged)
-  const sortedFiles = [...filteredFiles].sort((a, b) => {
-    const aValue = a[sortConfig.key];
-    const bValue = b[sortConfig.key];
-
-    if (typeof aValue === "string" && typeof bValue === "string") {
-      return sortConfig.direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-    }
-
-    if (typeof aValue === "number" && typeof bValue === "number") {
-      return sortConfig.direction === "asc" ? aValue - bValue : bValue - aValue;
-    }
-
-    return 0;
-  });
 
   // Pagination logic (unchanged)
   const totalPages = Math.ceil(totalRecords / pageSize);
@@ -194,15 +223,15 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
       id: Date.now().toString(),
       name: file.name,
       type: file.name.split(".").pop()?.toLowerCase() || "unknown",
-      size: file.size / 1024,
+      size: file.size,
       createdBy: "You",
-      createdDate: today.toISOString().split("T")[0],
+      createdDate: formatDate(today),
       description,
       permission: "owner",
       isLocked: false,
     };
 
-    setFiles((prevFiles) => [newFile, ...prevFiles]); // Prepend the new file to the beginning
+    setFiles((prevFiles) => [newFile, ...prevFiles]);
     setNewFileId(newFile.id);
 
     setTimeout(() => {
@@ -260,11 +289,11 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
 
   const renderTableHeader = () => {
     const headers = [
-      { key: "name", label: dir === "rtl" ? "نام فایل" : "Name" },
-      { key: "type", label: dir === "rtl" ? "نوع" : "Type" },
-      { key: "size", label: dir === "rtl" ? "سایز" : "Size" },
-      { key: "createdBy", label: dir === "rtl" ? "ایجاد کننده" : "Created By" },
-      { key: "createdDate", label: dir === "rtl" ? "تاریخ ایجاد" : "Created Date" },
+      { key: "name", label: t("tableHeaders.name") },
+      { key: "type", label:  t("tableHeaders.type")  },
+      { key: "size", label: t("tableHeaders.size") },
+      { key: "createdBy", label: t("tableHeaders.createdBy") },
+      { key: "createdDate", label:  t("tableHeaders.createdDate")  },
     ]
 
     return (
@@ -344,18 +373,9 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                //type="text"
-                placeholder={dir === "rtl" ? "جستجوی فایل ها..." : "Search files..."}
-                type="text"
-                placeholder="Search files..."
-                onChange={(e) => {
-                  const inputValue = e.target.value;
-                  setSearchQuery(inputValue); // Update searchQuery
-                  setKeywordSearch(inputValue); // Sync keyword_search with searchQuery
-                }}
-                //onChange={(e) => setKeywordSearch(e.target.value)}
+                placeholder={t("buttons.searchPlaceholder")}
+                onChange={(e) => handleSearch(e.target.value)}
                 value={searchQuery || ""}
-                // onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8"
               />
             </div>
@@ -365,16 +385,15 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
                 <SelectValue placeholder={dir === "rtl" ? "فیلتر" : "Filter"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{dir === "rtl" ? "همه" : "All"}</SelectItem>
-                <SelectItem value="pptx">{dir === "rtl" ? "pptx" : "pptx"}</SelectItem>
-                <SelectItem value="pdf">{dir === "rtl" ? "PDF" : "PDF"}</SelectItem>
-                <SelectItem value="docx">{dir === "rtl" ? "docx" : "docx"}</SelectItem>
-                <SelectItem value="xlsx">{dir === "rtl" ? "xlsx" : "xlsx"}</SelectItem>
-                <SelectItem value="png">{dir === "rtl" ? "png" : "png"}</SelectItem>
-                <SelectItem value="jpg" >{dir === "rtl" ? "jpg" : "jpg"}</SelectItem>
-                <SelectItem value="txt" >{dir === "rtl" ? "txt" : "txt"}</SelectItem>
-                {/* <SelectItem value="images">{dir === "rtl" ? "تصاویر" : "Images"}</SelectItem> */}
-                <SelectItem value="videos">{dir === "rtl" ? "ویدیوها" : "Videos"}</SelectItem>
+                <SelectItem value="all">{t('fileTypes.all')}</SelectItem>
+                <SelectItem value="pptx">{t('fileTypes.pptx')}</SelectItem>
+                <SelectItem value="pdf">{t('fileTypes.pdf')}</SelectItem>
+                <SelectItem value="docx">{t('fileTypes.docx')}</SelectItem>
+                <SelectItem value="xlsx">{t('fileTypes.xlsx')}</SelectItem>
+                <SelectItem value="png">{t('fileTypes.png')}</SelectItem>
+                <SelectItem value="jpg">{t('fileTypes.jpg')}</SelectItem>
+                <SelectItem value="txt">{t('fileTypes.txt')}</SelectItem>
+                <SelectItem value="videos">{t('fileTypes.videos')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -419,7 +438,8 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
 
             <Button onClick={() => setIsUploadOpen(true)}>
               <Upload className="mr-2 h-4 w-4" />
-              {dir === "rtl" ? "بارگذاری فایل " : "Upload File"}
+              {/* {dir === "rtl" ? "بارگذاری فایل " : "Upload File"} */}{t("buttons.upload")}
+
             </Button>
           </div>
         </div>
@@ -585,7 +605,7 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
                 onClick={handleGoToPage}
                 disabled={!goToPage || Number.parseInt(goToPage) < 1 || Number.parseInt(goToPage) > totalPages}
               >
-                {dir === "rtl" ? " برو به" : "Go"}
+                {/* {dir === "rtl" ? " برو به" : "Go"}*/}{t("buttons.goTo")} 
               </Button>
             </div>
           </div>

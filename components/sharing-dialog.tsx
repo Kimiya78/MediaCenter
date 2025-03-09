@@ -6,7 +6,8 @@ import { Download, Calendar, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import ConfigURL from "@/config";
-import { useDirection } from "@/components/folder-manager/context"; // Import the direction hook
+import { useDirection } from "@/components/folder-manager/context";
+import { useTranslation } from "react-i18next";
 
 interface SharingFormProps {
   correlationGuid: string;
@@ -15,7 +16,8 @@ interface SharingFormProps {
 export function SharingForm({ correlationGuid }: SharingFormProps) {
   const [fileData, setFileData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { dir } = useDirection(); // Detects LTR or RTL
+  const { dir } = useDirection();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchFileData = async () => {
@@ -25,7 +27,7 @@ export function SharingForm({ correlationGuid }: SharingFormProps) {
         });
 
         if (response.data && response.data.length > 0) {
-          setFileData(response.data[0]); // Assuming API returns an array
+          setFileData(response.data[0]);
         } else {
           throw new Error("No file data found");
         }
@@ -77,61 +79,43 @@ export function SharingForm({ correlationGuid }: SharingFormProps) {
     }
   };
 
-  // **Dynamic Labels for LTR & RTL**
-  const labels = dir === "rtl"
-    ? {
-        title: "اشتراک گذاری فایل",
-        fileName: "نام فایل",
-        fileSize: "حجم فایل",
-        fileDescription: "توضیحات",
-        uploadedBy: "بارگذاری شده توسط",
-        uploadedOn: "تاریخ بارگذاری",
-        downloadFile: "دریافت فایل",
-        loading: "در حال بارگذاری اطلاعات فایل...",
-        downloading: "در حال دریافت...",
-      }
-    : {
-        title: "Sharing File",
-        fileName: "File Name",
-        fileSize: "File Size",
-        fileDescription: "Description",
-        uploadedBy: "Uploaded By",
-        uploadedOn: "Uploaded On",
-        downloadFile: "Download File",
-        loading: "Loading file details...",
-        downloading: "Downloading...",
-      };
+  const formatFileSize = (sizeInBytes: number): string => {
+    const sizeInMB = sizeInBytes / (1024 * 1024);
+    return sizeInMB >= 1
+      ? sizeInMB.toFixed(2) + "    "+ " MB"
+      : (sizeInBytes / 1024).toFixed(2) + "    "+ " KB";
+  };
 
   return (
     <div
       className="max-w-2xl mx-auto p-6 bg-card rounded-lg shadow-lg bg-muted"
-      dir={dir} // Apply direction dynamically
+      dir={dir}
     >
       <h1 className="text-2xl font-bold text-center text-foreground mb-6">
-        {labels.title}
+        {t("sharingDialog.title")}
       </h1>
 
       {fileData ? (
         <>
           <div className="space-y-4">
             <div className="p-4 rounded-lg">
-              <div className=" text-foreground">{labels.fileName}: {fileData.FileName}</div>
-              <div className=" text-foreground mt-1">{labels.fileSize}: {fileData.FileSize} bytes</div>
-              <div className=" text-foreground mt-1">{labels.fileDescription}: {fileData.Description}</div>
+              <div className="text-foreground">{t("sharingDialog.fileName")}: {fileData.FileName}</div>
+              <div className="text-foreground mt-1">{t("sharingDialog.fileSize")}: {formatFileSize(fileData.FileSize)}</div>
+              <div className="text-foreground mt-1">{t("sharingDialog.fileDescription")}: {fileData.Description}</div>
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-baseline gap-2">
                 <User className="w-5 h-5 text-primary" />
-                <span className=" text-foreground">
-                  {labels.uploadedBy}: {fileData.CreatedBy}
+                <span className="text-foreground">
+                  {t("sharingDialog.uploadedBy")}: {fileData.CreatedBy}
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-baseline gap-2">
                 <Calendar className="w-5 h-5 text-primary" />
-                <span className=" text-foreground">
-                  {labels.uploadedOn}: {fileData.CreatedDateTime}
+                <span className="text-foreground">
+                  {t("sharingDialog.uploadedOn")}: {fileData.CreatedDateTime}
                 </span>
               </div>
             </div>
@@ -140,19 +124,19 @@ export function SharingForm({ correlationGuid }: SharingFormProps) {
           <div className="mt-6">
             <Button onClick={handleDownload} disabled={isLoading} className="w-full">
               {isLoading ? (
-                <span>{labels.downloading}</span>
+                <span>{t("sharingDialog.downloading")}</span>
               ) : (
                 <>
                   <Download className="mr-2 w-5 h-5" />
-                  {labels.downloadFile}
+                  {t("sharingDialog.downloadFile")}
                 </>
               )}
             </Button>
           </div>
         </>
       ) : (
-        <div className="text-center  text-muted">
-          {labels.loading}
+        <div className="text-center text-muted">
+          {t("sharingDialog.loading")}
         </div>
       )}
     </div>

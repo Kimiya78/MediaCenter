@@ -6,11 +6,11 @@ interface FileIconProps {
 }
 
 export function FileIcon({ type, className }: FileIconProps) {
-  //const iconPath = `/icons/${type.toLowerCase()}.svg`
-  const supportedTypes = ["pptx", "pdf", "docx", "xlsx", "png", "jpg", "jpeg", "txt", "mp4", "mov", "avi"]
-  const fileType = supportedTypes.includes(type.toLowerCase()) ? type.toLowerCase() : "unknown"
-  debugger
-  const iconPath = `/icons/${fileType}.svg`
+  const iconPath = `/icons/${type.toLowerCase()}.svg`
+  // const supportedTypes = ["pptx", "pdf", "docx", "xlsx", "png", "jpg", "jpeg", "txt", "mp4", "mov", "avi"]
+  // const fileType = supportedTypes.includes(type.toLowerCase()) ? type.toLowerCase() : "unknown"
+  // debugger
+  // const iconPath = `/icons/${fileType}.svg`
 
 
   return (
