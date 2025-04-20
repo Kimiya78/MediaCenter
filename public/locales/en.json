@@ -6,6 +6,11 @@
       "createdBy": "Created By",
       "createdDate": "Created Date"
     },
+    "fileCategories": {
+      "documents": "Documents",
+      "images": "Images",
+      "videos": "Videos"
+    },
     "fileCard": {
       "type": "Type",
       "date": "Date",
@@ -26,6 +31,7 @@
         "xlsx": "XLSX",
         "png": "PNG",
         "jpg": "JPG",
+        "jpeg": "JPEG",
         "txt": "TXT",
         "videos": "Videos"
     },
@@ -75,9 +81,90 @@
     "renameDialog": {
       "title": "Rename ",
       "newName": "New Name",
+      "newNamePlaceholder": "Enter new name",
       "cancel": "Cancel",
-      "rename": "Rename"
+      "rename": "Rename",
+      "renameSuccess": "File renamed successfully",
+      "renameFailed": "Failed to rename the file",
+      "renameError": "Error renaming file. Please try again"
+    },
+    "uploadDialog": {
+      "title": "Upload File",
+      "uploadingTo": "Uploading to",
+      "dragAndDrop": "Drag and drop a file here, or click to select",
+      "description": "Description (required)",
+      "descriptionPlaceholder": "Enter a description for the file",
+      "uploading": "Uploading...",
+      "uploadButton": "Upload File",
+      "selectFileError": "Please select a file and provide a description",
+      "selectFolderError": "Please select a folder to upload the file to",
+      "uploadSuccess": "File uploaded successfully",
+      "uploadError": "Failed to upload file. Please try again."
+    },
+    "share": {
+      "title": "Share File",
+      "description": "Add people and set their access level",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "example@domain.com",
+      "emailError": "Please enter a valid email address",
+      "permissionLabel": "Permission level",
+      "permissionViewer": "Viewer",
+      "permissionCooperative": "Cooperative",
+      "permissionOwner": "Owner",
+      "linkLabel": "Share link",
+      "linkCopied": "Link copied successfully",
+      "copyError": "Error copying link",
+      "cancel": "Cancel",
+      "submit": "Share"
+    },
+    "linksDialog": {
+      "title": "Links",
+      "download": "Download",
+      "expiresOn": "Expires On",
+      "anonymous": "Anonymous",
+      "passcode": "Passcode",
+      "createdBy": "Created By",
+      "createdOn": "Created On",
+      "edit": "Edit",
+      "close": "Close",
+      "noLinks": "No links available.",
+      "yes": "Yes",
+      "no": "No",
+      "noExpiration": "No Expiration"
+    },
+    "upsertLinksDialog": {
+      "addLink": "+ Add Link",
+      "title": "Attachment Link",
+      "loading": "Loading...",
+      "error": "Error fetching data",
+      "expiresOnLabel": "Expires On Date:",
+      "passwordLabel": "Password:",
+      "isAnonymousLabel": "Is Anonymous?",
+      "disableLabel": "Disable?",
+      "submitting": "Submitting...",
+      "submit": "Submit",
+      "initialURLDisabledMessage": "This is the initial URL and cannot be disabled."
+    },
+    "toast": {
+      "moved_to_trash": "File moved to trash",
+      "undo": "Undo",
+      "delete_failed": "Failed to delete the file",
+      "delete_error": "Error deleting file. Please try again",
+      "share_success": "File shared successfully!",
+      "copy_success": "File link copied to clipboard!",
+      "share_error": "Failed to share the file",
+      "download_error": "Failed to download the file"
+    },
+    "error": {
+      "video_container": "Video container not found",
+      "video_playback": "Error playing video"
+    },
+    "passwordDialog": {
+      "title": "Password",
+      "placeholder": "Enter password",
+      "cancel": "Cancel",
+      "download": "Download",
+      "checking": "Checking..."
     }
-
-}
+  }
   

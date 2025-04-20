@@ -7,6 +7,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { RenameDialog } from "@/components/rename-dialog";
 import { CreateDialog } from "@/components/create-dialog";
+import { useDirection } from "@/components/folder-manager/context";
 
 interface ContextMenuProps {
   x: number;
@@ -35,7 +36,7 @@ export default function FolderContextMenu({
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [currentFolderName, setCurrentFolderName] = useState(folderName);
-
+  const { dir } = useDirection();
   // Update currentFolderName when folderName prop changes
   useEffect(() => {
     setCurrentFolderName(folderName);
@@ -143,7 +144,11 @@ export default function FolderContextMenu({
       <ul
         ref={contextMenuRef}
         className="absolute shadow-md border rounded-md w-40 py-2 z-50 bg-background text-foreground"
-        style={{ top: y, left: x }}
+        style={{
+          top: y,
+          left: dir === 'ltr' ? x : undefined, 
+          right: dir === 'rtl' ? window.innerWidth - x : undefined, 
+        }}
       >
         <li
           className="px-4 py-2 hover:bg-muted cursor-pointer flex items-center gap-2"

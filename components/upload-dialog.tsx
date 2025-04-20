@@ -10,8 +10,9 @@ import { toast } from "sonner";
 import { useUploadFile } from "@/hooks/use-upload-file";
 import { useFolder } from "@/components/folder-manager/context";
 import { useDirection } from "@/components/folder-manager/context"
-
-
+import { useTranslation } from "react-i18next";
+import NexxFetch from "@/hooks/response-handling";
+import ConfigURL from "@/config";
 
 interface UploadDialogProps {
   isOpen: boolean;
@@ -28,12 +29,28 @@ export function UploadDialog({ isOpen, onClose, onUpload, destination }: UploadD
   const [progress, setProgress] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const { uploadFile } = useUploadFile();
-
+  const { t } = useTranslation();
   const { dir } = useDirection();
-
-
-  // Get the selectedFolderId from the context
   const { selectedFolderId } = useFolder();
+
+  // Add refetch functionality
+  const navigationItemsUrl = `${ConfigURL.baseUrl}/fetch_media?page_number=1&page_size=10&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${selectedFolderId}`;
+  const { refetch } = NexxFetch.useGetData(navigationItemsUrl, [selectedFolderId]);
+
+  // Reset all state function
+  const resetState = useCallback(() => {
+    setDescription("");
+    setDragActive(false);
+    setSelectedFile(null);
+    setUploading(false);
+    setProgress(0);
+  }, []);
+
+  // Custom close handler that resets state
+  const handleClose = useCallback(() => {
+    resetState();
+    onClose();
+  }, [resetState, onClose]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -64,12 +81,12 @@ export function UploadDialog({ isOpen, onClose, onUpload, destination }: UploadD
 
   const handleUpload = useCallback(async () => {
     if (!selectedFile || !description) {
-      toast.error("Please select a file and provide a description");
+      toast.error(t("uploadDialog.selectFileError"));
       return;
     }
 
     if (!selectedFolderId) {
-      toast.error("Please select a folder to upload the file to");
+      toast.error(t("uploadDialog.selectFolderError"));
       return;
     }
 
@@ -77,48 +94,56 @@ export function UploadDialog({ isOpen, onClose, onUpload, destination }: UploadD
       setUploading(true);
       setProgress(0);
 
-      const formData = new FormData();
-      formData.append("EntityGUID", "0xBD4A81E6A803");
-      formData.append("EntityDataGUID", "0x85AC4B90382C");
-      formData.append("ServiceCategoryID", "");
-      formData.append("ItemID", "");
-      formData.append("Description", description);
-      formData.append("ParentfolderId", selectedFolderId.toString()); // Use selectedFolderId from context
-      formData.append("file", selectedFile);
 
-      const response = await uploadFile(formData, (progressEvent) => {
+      // const formData = new FormData();
+      // formData.append("EntityGUID", "0xBD4A81E6A803");
+      // formData.append("EntityDataGUID", "0x85AC4B90382C");
+      // formData.append("ServiceCategoryID", "");
+      // formData.append("ItemID", "");
+      // formData.append("Description", description);
+      // formData.append("ParentfolderId", selectedFolderId.toString()); // Use selectedFolderId from context
+      // formData.append("file", selectedFile);
+
+      const uploadData = {
+        EntityGUID: "0xBD4A81E6A803",
+        EntityDataGUID: "0x85AC4B90382C",
+        ServiceCategoryID: "",
+        ItemID: "",
+        Description: description,
+        ParentfolderId: selectedFolderId.toString(),
+        file: selectedFile
+      };
+
+      const response = await uploadFile(uploadData, (progressEvent) => {
         const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
         setProgress(percentCompleted);
       });
 
       if (response.success) {
-        toast.success("File uploaded successfully");
-
         // Pass the new file data to the parent component
         onUpload?.(selectedFile, description);
-
         onClose();
         setSelectedFile(null);
         setDescription("");
       } else {
-        throw new Error(response.message || "Upload failed");
+        throw new Error(response.message || t("uploadDialog.uploadError"));
       }
     } catch (error) {
       console.error("Upload failed:", error);
-      toast.error("Failed to upload file. Please try again.");
+      toast.error(t("uploadDialog.uploadError"));
     } finally {
       setUploading(false);
       setProgress(0);
     }
-  }, [selectedFile, description, selectedFolderId, onUpload, onClose, uploadFile]);
+  }, [selectedFile, description, selectedFolderId, onUpload, onClose, uploadFile, t]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <div className="space-y-0.5">
-            <DialogTitle>{dir === "rtl" ? "بارگذاری فایل " : "Upload File"}</DialogTitle>
-            {destination && <p className="text-sm text-muted-foreground">Uploading to: {destination}</p>}
+            <DialogTitle>{t("uploadDialog.title")}</DialogTitle>
+            {destination && <p className="text-sm text-muted-foreground">{t("uploadDialog.uploadingTo")}: {destination}</p>}
           </div>
         </DialogHeader>
 
@@ -158,20 +183,20 @@ export function UploadDialog({ isOpen, onClose, onUpload, destination }: UploadD
                 accept="*/*"
               />
               <p className="text-sm text-muted-foreground">
-                {dir === "rtl" ? "یک فایل را در اینجا بکشید و سپس رها کنید یا برای انتخاب کلیک کنید" : "Drag and drop a file here, or click to select "}
+                {t("uploadDialog.dragAndDrop")}
               </p>
             </div>
           )}
 
           <div className="grid gap-2">
             <label htmlFor="description" className="text-sm font-medium">
-              {dir === "rtl" ? "توضیحات (اجباری)" : "Description (required)"}
+              {t("uploadDialog.description")}
             </label>
             <Textarea 
               id="description" 
               value={description} 
               onChange={(e) => setDescription(e.target.value)} 
-              placeholder={dir === "rtl" ? "توضیحات  فایل را وارد کنید" : "Enter a description for the file"}
+              placeholder={t("uploadDialog.descriptionPlaceholder")}
               rows={3} 
             />
           </div>
@@ -180,7 +205,7 @@ export function UploadDialog({ isOpen, onClose, onUpload, destination }: UploadD
             <div className="space-y-2">
               <Progress value={progress} className="h-2" />
               <p className="text-sm text-center text-muted-foreground">
-                Uploading... {progress}%
+                {t("uploadDialog.uploading")} {progress}%
               </p>
             </div>
           )}
@@ -190,8 +215,7 @@ export function UploadDialog({ isOpen, onClose, onUpload, destination }: UploadD
             disabled={!selectedFile || !description || uploading || !selectedFolderId} 
             className="w-full"
           >
-            {/* {uploading ? "Uploading..." : "Upload"} */}
-            {dir === "rtl" ? "بارگذاری  " : "Upload File"}
+            {t("uploadDialog.uploadButton")}
           </Button>
         </div>
       </DialogContent>

@@ -5,7 +5,7 @@ import { FileIcon } from "./file-icon";
 import { MoreVertical } from "lucide-react";
 import { ShareMenu } from "../share-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FolderProvider, useFolder, DirectionProvider } from "@/components/folder-manager/context"; 
 import { useDirection } from "@/components/folder-manager/context"
 import { useTranslation } from "react-i18next";
@@ -24,11 +24,8 @@ export function FileCard({ file: initialFile, onRename, onFileRemove }: FileCard
   const { dir } = useDirection();
   const { t } = useTranslation();
 
-  useEffect(() => {
-    setFile(initialFile);
-  }, [initialFile]);
-
   const formatDate = (dateString: string) => {
+    const date = moment(dateString);
     if (dir === 'rtl') {
       const jalaliDate = moment(dateString, "YYYY/MM/DD - HH:mm")
         .locale("fa")
@@ -58,11 +55,8 @@ export function FileCard({ file: initialFile, onRename, onFileRemove }: FileCard
       console.error("Invalid new name provided for renaming.");
       return;
     }
-
-    console.log("🟡 Renaming new Name :", newName.trim() );
-    console.log("🟡 Renaming file Name:", file.name);
     
-    onRename( newName.trim() , file.name);
+    onRename(file.name, newName.trim());
     setFile(prevFile => ({
       ...prevFile,
       name: newName.trim()
@@ -107,13 +101,8 @@ export function FileCard({ file: initialFile, onRename, onFileRemove }: FileCard
             attachmentUrlGuid={file.correlationGuid}
             correlationGuid={file.correlationGuid}
             folderId={selectedFolderId !== null ? selectedFolderId.toString() : ""}
-            requiresPassword={false} //{file.requiresPassword || false}
-            trigger={
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            }
-            // trigger={<MoreVertical className="h-4 w-4 cursor-pointer" />}
+            requiresPassword={false}
+            trigger={<MoreVertical className="h-4 w-4 cursor-pointer" />}
             isLocked={file.isLocked}
             onRename={(newName) => handleRenameFile(file.id, newName)}
             onFileRemove={handleFileRemove}
@@ -128,7 +117,7 @@ export function FileCard({ file: initialFile, onRename, onFileRemove }: FileCard
           </div>
           <div className="flex justify-between items-center gap-2">
             <span className="text-muted-foreground flex-shrink-0">{t("fileCard.date")}</span>
-            <span className="font-medium truncate max-w-[150px]">{file.createdDate}</span>
+            <span className="font-medium truncate max-w-[150px]">{formatDate(file.createdDate)}</span>
           </div>
           <div className="flex justify-between items-center gap-2">
             <span className="text-muted-foreground flex-shrink-0">{t("fileCard.createdBy")}</span>

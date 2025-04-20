@@ -11,9 +11,24 @@ interface ProgressCallback {
   (progressEvent: { loaded: number; total: number }): void;
 }
 
+interface UploadData {
+  EntityGUID: string;
+  EntityDataGUID: string;
+  ServiceCategoryID: string;
+  ItemID: string;
+  Description: string;
+  ParentfolderId: string;
+  file: File;
+}
+
 export function useUploadFile() {
-  const uploadFile = async (formData: FormData, onProgress?: ProgressCallback): Promise<UploadResponse> => {
+  const uploadFile = async (data: UploadData, onProgress?: ProgressCallback): Promise<UploadResponse> => {
     try {
+      const formData = new FormData();
+      Object.entries(data).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+
       const response = await axios.post(`${ConfigURL.baseUrl}/create`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',

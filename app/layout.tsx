@@ -20,7 +20,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning className="overflow-hidden ">
-      <body className={inter.className}>
+       <body  className={`${inter.className} !pointer-events-auto`}> {/* className={`${inter.className} !pointer-events-auto`} */}
       <QueryClientProvider client={queryClient}>
         <ThemeProvider
           attribute="class"

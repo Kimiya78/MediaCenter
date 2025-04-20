@@ -5,15 +5,35 @@ export interface FileItem {
   id: string
   name: string
   type: string
-  size: number
+  size: string | number
   createdBy: string
   createdDate: string
-  isLocked?: boolean
+  isLocked: boolean
   permission: FilePermission
-  description?: string
+  description: string
   createdByAvatar?: string
   attachmentUrlGuid?: string
   requiresPassword?: boolean
+  isNew?: boolean
+}
+
+export interface APIResponse {
+  data: {
+    items: Array<{
+      CorrelationGUID: string;
+      FileGUID: string;
+      FileName: string;
+      FileExtension: string;
+      FileSize: number;
+      CreatedBy: string;
+      CreatedDateTime: string;
+      Description: string;
+      allowDeleteFile: string;
+    }>;
+    total_records: number;
+    page_size: number;
+    page_number: number;
+  };
 }
 
 export interface SortConfig {

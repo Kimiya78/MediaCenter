@@ -6,6 +6,11 @@
       "createdBy": "ایجاد شده توسط",
       "createdDate": "تاریخ ایجاد"
     },
+    "fileCategories": {
+      "documents": "اسناد",
+      "images": "تصاویر",
+      "videos": "ویدیوها"
+    },
     "fileCard": {
       "type": "نوع",
       "date": "تاریخ",
@@ -14,7 +19,7 @@
       "noDescription": "بدون توضیحات"
     },
     "buttons": {
-      "upload": "آپلود",
+      "upload": "بارگذاری فایل",
       "searchPlaceholder": "جستجوی فایل‌ها...",
       "goTo": "برو به"
     },
@@ -24,7 +29,7 @@
         "pdf": "PDF",
         "docx": "DOCX",
         "xlsx": "XLSX",
-        "png": "PNG",
+        "png": "png",
         "jpg": "JPG",
         "txt": "TXT",
         "videos": "ویدیوها"
@@ -37,7 +42,7 @@
         "title": "اشتراک گذاری فایل",
         "fileName": "نام فایل",
         "fileSize": "حجم فایل",
-        "fileDescription": "تتتوضیحات",
+        "fileDescription": "توضیحات",
         "uploadedBy": "بارگذاری شده توسط",
         "uploadedOn": "تاریخ بارگذاری",
         "downloadFile": "دریافت فایل",
@@ -77,7 +82,91 @@
         "newName": "نام جدید",
         "newNamePlaceholder": "نام جدید را وارد کنید",
         "cancel": "انصراف",
-        "rename": "ویرایش"
-      }
+        "rename": "ویرایش", 
+        "renameSuccess": "فایل با موفقیت ویرایش شد",
+        "renameFailed": "ویرایش فایل با شکست مواجه شد",
+        "renameError": "خطا در ویرایش فایل. لطفاً دوباره تلاش کنید"
+      },
+      "uploadDialog": {
+        "title": "بارگذاری  فایل" ,
+        "uploadingTo": "بارگذاری در",
+        "dragAndDrop": "یک فایل را در اینجا بکشید و سپس رها کنید یا برای انتخاب کلیک کنید",
+        "description": "توضیحات (اجباری)",
+        "descriptionPlaceholder": "توضیحات فایل را وارد کنید",
+        "uploading": "در حال بارگذاری...",
+        "uploadButton": "بارگذاری فایل",
+        "selectFileError": "لطفاً یک فایل انتخاب کنید و توضیحات را وارد کنید",
+        "selectFolderError": "لطفاً یک پوشه برای بارگذاری فایل انتخاب کنید",
+        "uploadSuccess": "فایل با موفقیت بارگذاری شد",
+        "uploadError": "بارگذاری فایل با خطا مواجه شد. لطفاً دوباره تلاش کنید."
+      },
+    "toast": {
+      "moved_to_trash": "فایل به سطل زباله منتقل شد",
+      "undo": "بازگشت",
+      "delete_failed": "حذف فایل با شکست مواجه شد",
+      "delete_error": "خطا در حذف فایل. لطفاً دوباره تلاش کنید",
+      "share_success": "فایل با موفقیت به اشتراک گذاشته شد!",
+      "copy_success": "لینک فایل در کلیپ‌بورد کپی شد!",
+      "share_error": "اشتراک‌گذاری فایل با شکست مواجه شد",
+      "download_error": "دانلود فایل با شکست مواجه شد"
+    },
+    "share": {
+      "title": "اشتراک‌گذاری فایل",
+      "description": "ایمیل و سطح دسترسی را مشخص کنید",
+      "emailLabel": "آدرس ایمیل",
+      "emailPlaceholder": "example@domain.com",
+      "emailError": "لطفا یک ایمیل معتبر وارد کنید",
+      "permissionLabel": "سطح دسترسی",
+      "permissionViewer": "مشاهده‌کننده",
+      "permissionCooperative": "همکار",
+      "permissionOwner": "مالک",
+      "linkLabel": "لینک اشتراک‌گذاری",
+      "linkCopied": "لینک با موفقیت کپی شد",
+      "copyError": "خطا در کپی کردن لینک",
+      "cancel": "انصراف",
+      "submit": "اشتراک‌گذاری",
+      "message": "این فایل برای دانلود در دسترس است: {{url}}",
+      "text": "فایل: {{fileName}}\nتوضیحات: {{fileDescription}}\nآپلود شده توسط: {{uploadedBy}}\nتاریخ آپلود: {{uploadedOn}}\n\n{{shareMessage}}"
+    },
+    "linksDialog": {
+      "title": "لینک‌ها",
+      "download": "دریافت فایل",
+      "expiresOn": "تاریخ انقضا",
+      "anonymous": "دسترسی همگانی",
+      "passcode": "رمزگذاری شده",
+      "createdBy": "ایجاد کننده",
+      "createdOn": "تاریخ بارگذاری",
+      "edit": "ویرایش",
+      "close": "بستن",
+      "noLinks": "لینکی موجود نیست.",
+      "yes": "بله",
+      "no": "خیر",
+      "noExpiration": "بدون انقضا",
+      "error": "خطا در دریافت لینک‌ها"
+    },
+    "upsertLinksDialog": {
+      "addLink": "+ افزودن لینک",
+      "title": "لینک ضمیمه",
+      "loading": "در حال بارگذاری...",
+      "error": "خطا در دریافت داده‌ها",
+      "expiresOnLabel": "تاریخ انقضا:",
+      "passwordLabel": "رمز عبور:",
+      "isAnonymousLabel": "دسترسی همگانی؟",
+      "disableLabel": "غیرفعال؟",
+      "submitting": "در حال ارسال...",
+      "submit": "ثبت",
+      "initialURLDisabledMessage": "این لینک ساختار اولیه است و نمی‌توان آن را غیرفعال کرد."
+    },
+    "error": {
+      "video_container": "ظرف ویدیو یافت نشد",
+      "video_playback": "خطا در پخش ویدیو"
+    },
+    "passwordDialog": {
+      "title": "رمز عبور",
+      "placeholder": "رمز عبور را وارد کنید",
+      "cancel": "انصراف",
+      "download": "دانلود",
+      "checking": "در حال بررسی..."
+    }
 }
   

@@ -105,14 +105,35 @@ class NexxFetch {
       queryFn: async (): Promise<AxiosResponse<T>> => {
         const response = await axiosInstance.get<T>(url);
         console.log('Axios Response:', response);
-
-        return response.data; // Return the full response object
+        return response.data;
       },
+      staleTime: 30000, // Data stays fresh for 30 seconds
+      refetchOnWindowFocus: false, // Prevent refetch on window focus
       ...options
     });
 
     return queryResult;
   };
+
+  static useGetDataa = <T>(
+    url: string,
+    queryKey: readonly any[],
+    options = {}
+  ) => {
+    const queryResult = useQuery<T, Error>({
+      queryKey,
+      queryFn: async (): Promise<T> => {
+        const response = await axiosInstance.get<T>(url);
+        console.log("✅ response from axios", response.data);
+        return response.data; // ✅ فقط data برگردون
+      },
+      ...options
+    });
+  
+    return queryResult;
+  };
+  
+  
 
   /**
    * POST request with React Query

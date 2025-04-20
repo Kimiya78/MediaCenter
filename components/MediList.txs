@@ -28,7 +28,7 @@ const MediaList: React.FC<MediaListProps> = ({ viewMode, setViewMode }) => {
     setPage(1);
   };
 
-  if (isLoading) return <div className="text-center p-4">Loading...</div>;
+  if (isLoading) return <div className="text-center p-4">Loading...</div>; 
   if (error) return <div className="text-center p-4 text-red-500">Error loading media</div>;
 
   return (

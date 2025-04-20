@@ -10,6 +10,7 @@ import ConfigURL from "@/config";
 import FolderContextMenu from "@/components/folder-manager/folder-contextMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDirection } from "@/components/folder-manager/context"
+import StorageSidebar from "@/components/storage-dialog";
 
 
 
@@ -171,7 +172,10 @@ export function Sidebar() {
     <div className="w-64 h-screen border-r bg-background text-foreground">
       <div className="p-4 flex flex-col h-full">
         <h1 className="text-xl font-bold mb-8">{dir === "rtl" ? "پوشه ها" : "Folders"}</h1>
-        <nav className="space-y-2">{renderFolderTree(folderTree)}</nav>
+        <nav className="space-y-2 flex-1 overflow-auto">{renderFolderTree(folderTree)}</nav>
+        {/* <div className="mt-4 border-t pt-4"> */}
+          <StorageSidebar />
+        {/* </div> */}
       </div>
 
       {contextMenu && (
@@ -199,9 +203,17 @@ export function Sidebar() {
       )}
 
       {announcement && (
-        <div className="fixed bottom-4 left-4 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 z-50">
-
-          <span>{dir === "rtl" ? `( ${announcement.newName} ) تغییر یافت به ( ${announcement.oldName} )` : `( ${announcement.oldName} ) renamed to ( ${announcement.newName} )`}</span>
+        <div 
+          className={`fixed bottom-4 ${
+            dir === "rtl" ? "right-4" : "left-4"
+          } bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 z-50`}
+        >
+          <span>
+            {dir === "rtl" 
+              ? `( ${announcement.oldName} ) تغییر یافت به ( ${announcement.newName} )`
+              : `( ${announcement.oldName} ) renamed to ( ${announcement.newName} )`
+            }
+          </span>
           <button
             onClick={() => setAnnouncement(null)}
             className="hover:bg-gray-800 p-1 rounded"

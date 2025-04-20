@@ -6,9 +6,9 @@ import { FileCard } from "./file-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { LayoutGrid, List, Search, Upload, MoreVertical } from "lucide-react"
+import { LayoutGrid, List, Search, Upload, MoreVertical, FileText, Presentation, Table, ChevronDown, Video, Image as ImageIcon, File as FileIcon } from "lucide-react"
 import { UploadDialog } from "../upload-dialog"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+//import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ShareMenu } from "../share-menu"
 import {
   Pagination,
@@ -19,6 +19,17 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useDirection } from "@/components/folder-manager/context"
 import ConfigURL  from "@/config"
 import '@/app/globals.css'
@@ -62,12 +73,29 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
   const [keyword_search, setKeywordSearch] = useState<string>('');
   const { t } = useTranslation();
   const { i18n } = useTranslation();
+  const [objectName, setObjectName] = useState("8");
+
+
+  // Reset animation state when folder changes
+  useEffect(() => {
+    setNewFileId(null);
+  }, [selectedFolderId]);
+
+  // Reset animation state when page changes
+  useEffect(() => {
+    setNewFileId(null);
+  }, [currentPage]);
+
+  // useEffect(() => {
+  //   console.log("Folder changed to:", selectedFolderId); // 🔍
+  //   refetch();
+  // }, [currentPage, pageSize, selectedFolderId, keyword_search]);
+  
 
   // NexxFetch API Call
   const navigationItemsUrl = `${ConfigURL.baseUrl}/fetch_media?page_number=${currentPage}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${selectedFolderId}&keyword_search=${encodeURIComponent(keyword_search)}`;
-
-
-  const { data, isLoading, error: fetchError, refetch } =  NexxFetch.useGetData<{
+  
+  const { data, isLoading, error: fetchError , refetch} =  NexxFetch.useGetData<{
     page_number: number;
     total_records: number;
     page_size: number;
@@ -84,7 +112,7 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
 
   useEffect(() => {
     if (data?.items) {
-      const transformedData: FileItem[] = data.items.map((item) => {
+      const transformedData: FileItem[] = data.items.map((item: APIFileItem) => {
         if (dir === "ltr") {
           return {
             correlationGuid: item.CorrelationGUID,
@@ -123,7 +151,7 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
       setError(null);
     }
   }, [data, dir]);
-
+  
   // Modify the search input handler
   const handleSearch = (inputValue: string) => {
     setSearchQuery(inputValue);
@@ -136,18 +164,25 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
     if (fileType === "all") return true;
 
     const typeMap: Record<string, string[]> = {
-      pptx: ["pptx"],
+      pictures: ["png", "jpg", "jpeg"],
+      videos: ["mp4", "mov", "avi"],
+      documents: ["pptx", "pdf", "docx", "xlsx", "txt"],
       pdf: ["pdf"],
       docx: ["docx"],
+      pptx: ["pptx"],
       xlsx: ["xlsx"],
       png: ["png"],
-      jpg: ["jpg", "Jpg"],
+      jpg: ["jpg"],
       jpeg: ["jpeg"],
-      videos: ["mp4", "mov", "avi"],
       txt: ["txt"],
+      all: ["png", "jpg", "jpeg", "mp4", "mov", "avi", "pptx", "pdf", "docx", "xlsx", "txt"]
     };
 
-    return typeMap[fileType]?.includes((file.type || "").toLowerCase());
+    const allowedExtensions = typeMap[fileType];
+    if (!allowedExtensions) return false;
+
+    const fileExtension = (file.type || "").toLowerCase();
+    return allowedExtensions.includes(fileExtension);
   });
 
   // Sorting logic
@@ -166,28 +201,11 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
     return 0;
   });
 
-  // Update refetch dependencies
-  useEffect(() => {
-    refetch();
-  }, [currentPage, pageSize, selectedFolderId, keyword_search]);
-
-
-  
-  // ✅ Ensure API call updates with new `keyword_search`
-  useEffect(() => {
-    refetch(); // Call API when keyword_search changes
-  }, [keyword_search]);
-
-
   // Reset search inputs when selectedFolderId changes
   useEffect(() => {
-    setCurrentPage(1);  // Reset to the first page
-    // Clear the search query and keyword_search
-    setSearchQuery(null); // Reset searchQuery to null
-    setKeywordSearch(''); // Reset keyword_search to an empty string
-
-    // Optionally, refetch data to reflect the new folder selection
-    refetch();
+    setCurrentPage(1);
+    setSearchQuery(null);
+    setKeywordSearch('');
   }, [selectedFolderId]);
   
 
@@ -216,46 +234,60 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
     }
   };
 
-  // Upload logic (unchanged)
+  // Upload logic with animation
   const addNewFile = (file: File, description: string) => {
+    console.log("direction now is this value : " , dir)
+    debugger
     const today = new Date();
     const newFile: FileItem = {
       id: Date.now().toString(),
       name: file.name,
       type: file.name.split(".").pop()?.toLowerCase() || "unknown",
-      size: file.size,
+      size: formatFileSize(file.size),
       createdBy: "You",
-      createdDate: formatDate(today),
-      description,
+      createdDate: dir === "rtl" 
+        ? moment(today).locale("fa").format("HH:mm - YYYY/MM/DD")
+        : moment(today).format("YYYY/MM/DD - HH:mm"),
+      description: description,
       permission: "owner",
-      isLocked: false,
+      isLocked: false
     };
 
-    setFiles((prevFiles) => [newFile, ...prevFiles]);
+    // Add the new file at the beginning of the list with animation
+    setFiles((prevFiles) => {
+      const updatedFiles = [newFile, ...prevFiles];
+      return updatedFiles;
+    });
     setNewFileId(newFile.id);
 
+    // Remove animation after 2 seconds
     setTimeout(() => {
       setNewFileId(null);
     }, 2000);
+
+    
   };
 
-  // Rename logic (unchanged)
+  // Rename logic with animation
   const handleRenameFile = (fileId: string, newName: string) => {
-    debugger
     if (!newName || newName.trim() === "") {
       console.error("Invalid new name provided for renaming.");
       return;
     }
 
     setFiles((prevFiles) => {
-      const updatedFiles = prevFiles.map((file) =>
-        file.id === fileId ? { ...file, name: newName.trim() } : file
-      );
-      return [...updatedFiles]; // Force React to detect the change
+      const fileIndex = prevFiles.findIndex(file => file.id === fileId);
+      if (fileIndex === -1) return prevFiles;
+      
+      const updatedFiles = [...prevFiles];
+      updatedFiles[fileIndex] = { ...updatedFiles[fileIndex], name: newName.trim() };
+      return updatedFiles;
     });
 
-    // Apply animation to renamed file like an upload
-    setNewFileId(fileId);
+    // Apply animation to renamed file
+    setNewFileId(newName);
+
+    // Remove animation after 2 seconds
     setTimeout(() => {
       setNewFileId(null);
     }, 2000);
@@ -263,8 +295,7 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
   
 
   const handleFileRemove = (correlationGuid: string) => {
-    debugger
-    setFiles((prevFiles) => prevFiles.filter((file) => file.correlationGuid !== correlationGuid));
+    setFiles(prevFiles => prevFiles.filter(file => file.correlationGuid !== correlationGuid));
   };
 
   const FileActions = ({ file }: { file: FileItem }) => {
@@ -334,24 +365,24 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
             )}
           </td>
         ))}
-        <td className="px-4 py-3 text-right">
-          <ShareMenu
-            fileId={file.id}
-            fileName={file.name}
-            fileDescription={file.description}
-            fileSize={file.size.toString()}
-            uploadedBy={file.createdBy}
-            uploadedOn={file.createdDate}
-            attachmentUrlGuid={file.correlationGuid}
-            correlationGuid={file.correlationGuid}
-            folderId={selectedFolderId}
-            requiresPassword={false}
-            trigger={<MoreVertical className="h-4 w-4 cursor-pointer" />}
-            isLocked={file.isLocked}
-            onRename={handleRenameFile}
-            onFileRemove={handleFileRemove}
-          />
-        </td>
+        {/* <td className="px-4 py-3 text-right">
+           <ShareMenu
+             fileId={file.id}
+             fileName={file.name}
+             fileDescription={file.description}
+             fileSize={file.size.toString()}
+             uploadedBy={file.createdBy}
+             uploadedOn={file.createdDate}
+             attachmentUrlGuid={file.correlationGuid}
+             correlationGuid={file.correlationGuid}
+             folderId={selectedFolderId}
+             requiresPassword={false}
+             trigger={<MoreVertical className="h-4 w-4 cursor-pointer" />}
+             isLocked={file.isLocked}
+             onRename={(newName) => handleRenameFile(file.id, newName)}
+             onFileRemove={handleFileRemove}
+           />
+        </td> */}
       </tr>
     ));
   };
@@ -363,6 +394,80 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
     refetch();
   };
 
+  // Modify the rendering logic to show new files first
+  const renderFiles = () => {
+    // First, find any new file that should be shown with animation
+    const newFile = files.find(file => file.id === newFileId);
+    
+    // Then get the rest of the files after filtering and sorting
+    const filteredAndSortedFiles = sortedFiles.filter(file => file.id !== newFileId);
+
+    // Combine them with new file first
+    const displayFiles = newFile ? [newFile, ...filteredAndSortedFiles] : filteredAndSortedFiles;
+
+    if (view === "grid") {
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 lg:grid-cols-3 gap-4">
+          {displayFiles.map((file) => (
+            <div key={file.id} className={`${newFileId === file.id ? "animate-new-file" : ""}`}>
+              <FileCard
+                file={file}
+                onRename={(newName) => handleRenameFile(file.id, newName)}
+                onFileRemove={handleFileRemove}
+              />
+            </div>
+          ))}
+        </div>
+      );
+    } else {
+      return (
+        <div className="rounded-lg border bg-card">
+          <table className="min-w-full rounded-lg overflow-hidden">
+            <thead>{renderTableHeader()}</thead>
+            <tbody>
+              {displayFiles.map((file) => (
+                <tr key={file.id} className={`border-b hover:bg-muted/50 ${newFileId === file.id ? "animate-new-file" : ""}`}>
+                  {["name", "type", "size", "createdBy", "createdDate"].map((field) => (
+                    <td key={field} className={`px-4 py-3 persian-text ${dir === "rtl" ? "text-right" : "text-left"}`}>
+                      {field === "createdBy" ? (
+                        <div className="flex items-center gap-2">
+                          <Avatar className="w-8 h-8">
+                            <AvatarImage src={file.createdByAvatar} alt={file.createdBy} />
+                            <AvatarFallback>{file.createdBy?.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium truncate max-w-[120px]">{file.createdBy}</span>
+                        </div>
+                      ) : (
+                        file[field as keyof FileItem]
+                      )}
+                    </td>
+                  ))}
+                  <td className="px-4 py-3 text-right">
+                    <ShareMenu
+                      fileId={file.id}
+                      fileName={file.name}
+                      fileDescription={file.description || ""}
+                      fileSize={file.size.toString()}
+                      uploadedBy={file.createdBy}
+                      uploadedOn={file.createdDate}
+                      attachmentUrlGuid={file.correlationGuid}
+                      correlationGuid={file.correlationGuid}
+                      folderId={selectedFolderId}
+                      requiresPassword={false}
+                      trigger={<MoreVertical className="h-4 w-4 cursor-pointer" />}
+                      isLocked={file.isLocked}
+                      onRename={(newName) => handleRenameFile(file.id, newName)}
+                      onFileRemove={handleFileRemove}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+  };
 
   return (
     <div className=" grid grid-rows-[5rem_auto_3.5rem] h-[calc(100vh_-_10rem)]">
@@ -371,31 +476,114 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1">
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className={`absolute ${dir === 'rtl' ? 'right-2' : 'left-2'} top-2.5 h-4 w-4 text-muted-foreground`} />
               <Input
                 placeholder={t("buttons.searchPlaceholder")}
                 onChange={(e) => handleSearch(e.target.value)}
                 value={searchQuery || ""}
-                className="pl-8"
+                className={dir === 'rtl' ? 'pr-8' : 'pl-8'}
               />
             </div>
 
-            <Select value={fileType} onValueChange={setFileType}>
-              <SelectTrigger className="w-full sm:w-32 persian-text">
-                <SelectValue placeholder={dir === "rtl" ? "فیلتر" : "Filter"} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('fileTypes.all')}</SelectItem>
-                <SelectItem value="pptx">{t('fileTypes.pptx')}</SelectItem>
-                <SelectItem value="pdf">{t('fileTypes.pdf')}</SelectItem>
-                <SelectItem value="docx">{t('fileTypes.docx')}</SelectItem>
-                <SelectItem value="xlsx">{t('fileTypes.xlsx')}</SelectItem>
-                <SelectItem value="png">{t('fileTypes.png')}</SelectItem>
-                <SelectItem value="jpg">{t('fileTypes.jpg')}</SelectItem>
-                <SelectItem value="txt">{t('fileTypes.txt')}</SelectItem>
-                <SelectItem value="videos">{t('fileTypes.videos')}</SelectItem>
-              </SelectContent>
-            </Select>
+            <DropdownMenu dir={dir}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full sm:w-32 persian-text flex justify-between items-center">
+                  {dir === 'rtl' ? (
+                    <>
+                      <ChevronDown className="h-4 w-4 opacity-50 " />
+                      <span className="truncate">
+                        {fileType === "all" ? t("fileTypes.all") : t(`fileTypes.${fileType}`)}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="truncate">
+                        {fileType === "all" ? t("fileTypes.all") : t(`fileTypes.${fileType}`)}
+                      </span>
+                      <ChevronDown className="h-4 w-4 opacity-50 rtl:rotate-180" />
+                    </>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align={dir === 'rtl' ? 'end' : 'start'}>
+                <DropdownMenuItem className="flex items-center" onClick={() => setFileType("all")}>
+                  {t("fileTypes.all")}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+
+                {/* Documents Category */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="flex items-center" dir={dir}>
+                    <FileText className={`h-4 w-4 ${dir === 'rtl' ? 'ml-2' : 'mr-2'}`} />
+                    <span>{t("fileCategories.documents")}</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem className="flex items-center" onClick={() => setFileType("pdf")}>
+                        <FileIcon className={`h-4 w-4 ${dir === 'rtl' ? 'ml-2' : 'mr-2'}`} />
+                        <span>{t("fileTypes.pdf")}</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center" onClick={() => setFileType("docx")}>
+                        <FileText className={`h-4 w-4 ${dir === 'rtl' ? 'ml-2' : 'mr-2'}`} />
+                        <span>{t("fileTypes.docx")}</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center" onClick={() => setFileType("pptx")}>
+                        <Presentation className={`h-4 w-4 ${dir === 'rtl' ? 'ml-2' : 'mr-2'}`} />
+                        <span>{t("fileTypes.pptx")}</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center" onClick={() => setFileType("xlsx")}>
+                        <Table className={`h-4 w-4 ${dir === 'rtl' ? 'ml-2' : 'mr-2'}`} />
+                        <span>{t("fileTypes.xlsx")}</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center" onClick={() => setFileType("txt")}>
+                        <FileText className={`h-4 w-4 ${dir === 'rtl' ? 'ml-2' : 'mr-2'}`} />
+                        <span>{t("fileTypes.txt")}</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+
+                {/* Images Category */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="flex items-center" dir={dir}>
+                    <ImageIcon className={`h-4 w-4 ${dir === 'rtl' ? 'ml-2' : 'mr-2'}`} />
+                    <span>{t("fileCategories.images")}</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem className="flex items-center" onClick={() => setFileType("png")}>
+                        <ImageIcon className={`h-4 w-4 ${dir === 'rtl' ? 'ml-2' : 'mr-2'}`} />
+                        <span>{t("fileTypes.png")}</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center" onClick={() => setFileType("jpg")}>
+                        <ImageIcon className={`h-4 w-4 ${dir === 'rtl' ? 'ml-2' : 'mr-2'}`} />
+                        <span>{t("fileTypes.jpg")}</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center" onClick={() => setFileType("jpeg")}>
+                        <ImageIcon className={`h-4 w-4 ${dir === 'rtl' ? 'ml-2' : 'mr-2'}`} />
+                        <span>{t("fileTypes.jpeg")}</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+
+                {/* Videos Category */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="flex items-center" dir={dir}>
+                    <Video className={`h-4 w-4 ${dir === 'rtl' ? 'ml-2' : 'mr-2'}`} />
+                    <span>{t("fileCategories.videos")}</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem className="flex items-center" onClick={() => setFileType("videos")}>
+                        <Video className={`h-4 w-4 ${dir === 'rtl' ? 'ml-2' : 'mr-2'}`} />
+                        <span>{t("fileTypes.videos")}</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <div className="flex items-center gap-2">
@@ -437,7 +625,7 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
             </TooltipProvider>
 
             <Button onClick={() => setIsUploadOpen(true)}>
-              <Upload className="mr-2 h-4 w-4" />
+              <Upload className="mr-2 h-4 w-4 "  style={{ fontFamily: dir === 'rtl' ? 'IranYekanBakh' : 'EnglishFont' }} />
               {/* {dir === "rtl" ? "بارگذاری فایل " : "Upload File"} */}{t("buttons.upload")}
 
             </Button>
@@ -446,7 +634,7 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
       </div>
 
       {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-auto p-4 scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-500 hover:scrollbar-thumb-gray-700 overflow-y-scroll ">
+      <div className="flex-1 overflow-auto p-4 scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-500 hover:scrollbar-thumb-gray-700 ">
       
       {isLoading && selectedFolderId !== null && (
         <div className="absolute top-0 left-0 right-0 bottom-0 flex flex-col justify-center items-center bg-white bg-opacity-50 z-50">
@@ -467,35 +655,16 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
             />
           </svg>
           {/* Loading Text */}
-          <p className="mt-4 text-gray-600 font-medium text-lg">Loading...</p>
+          <p className="mt-4 text-gray-600 font-medium text-lg">{t("sharingDialog.loading")}</p>
         </div>
       )}
 
 
-        {view === "grid" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 lg:grid-cols-3 gap-4 ">
-            {sortedFiles.map((file) => (
-              <div key={file.id} className={`${newFileId === file.id ? "animate-new-file" : ""}`}>
-                <FileCard  key={file.id}
-                            file={file}
-                            onRename={handleRenameFile} // Pass the rename handler how to pass newName too ??????????????
-                            onFileRemove={handleFileRemove}
-                          />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-lg border bg-card ">
-            <table className="min-w-full rounded-lg overflow-hidden">
-              <thead>{renderTableHeader()}</thead>
-              <tbody>{renderTableBody()}</tbody>
-            </table>
-          </div>
-        )}
+        {renderFiles()}
       </div>
 
       {/* Fixed Footer with RTL-aware pagination */}
-      <div className="sticky bottom-0 z-10 bg-background border-t p-4">
+      <div className=" z-10 bg-background border-t p-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <Select
             value={pageSize.toString()}
@@ -604,6 +773,7 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
                 size="sm"
                 onClick={handleGoToPage}
                 disabled={!goToPage || Number.parseInt(goToPage) < 1 || Number.parseInt(goToPage) > totalPages}
+                 style={{ fontFamily: dir === 'rtl' ? 'IranYekanBakh' : 'EnglishFont' }} 
               >
                 {/* {dir === "rtl" ? " برو به" : "Go"}*/}{t("buttons.goTo")} 
               </Button>

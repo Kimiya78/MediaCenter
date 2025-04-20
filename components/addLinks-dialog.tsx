@@ -20,7 +20,6 @@ export function UpsertLinksDialog({ correlationGuid }) {
   const [password, setPassword] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [fetchedData, setFetchedData] = useState(null);
-  debugger
   useEffect(() => {
     async function fetchData() {
 

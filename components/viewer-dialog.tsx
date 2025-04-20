@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useTranslation } from "react-i18next"
 import { useDirection } from "@/components/folder-manager/context"
+import moment from "jalali-moment"
+import { convertToJalali } from "@/lib/utils"
 
 interface Viewer {
   CreatedBy: string
-  DateTime: string
+  FormattedDateTime: string
 }
 
 interface ViewerDialogProps {
@@ -19,19 +21,19 @@ interface ViewerDialogProps {
 export function ViewerDialog({ isOpen, onClose, viewerData }: ViewerDialogProps) {
   const { t } = useTranslation()
   const { dir } = useDirection()
-  const formatDateTime = (dateTime: string): string => {
-    if (!dateTime) return ""; // Handle empty or invalid datetime strings
-    const dateObject = new Date(dateTime);
-    const year = dateObject.getFullYear();
-    const month = String(dateObject.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-    const day = String(dateObject.getDate()).padStart(2, '0');
-    const hours = String(dateObject.getHours()).padStart(2, '0');
-    const minutes = String(dateObject.getMinutes()).padStart(2, '0');
-    const seconds = String(dateObject.getSeconds()).padStart(2, '0');
 
-    return `${year}-${month}-${day}  ${hours}:${minutes}:${seconds}`;
-  }
-  
+  const formatDate = (dateString: string) => {
+    const date = moment(dateString);
+    if (dir === 'rtl') {
+      const jalaliDate = moment(dateString, "YYYY/MM/DD - HH:mm")
+      .locale("fa") // Set Persian locale
+      .format(" HH:mm - jYYYY/jMM/jDD"); // Convert to Jalali
+      return jalaliDate;
+    }
+    if (dir === 'ltr') {
+    return dateString
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -57,8 +59,8 @@ export function ViewerDialog({ isOpen, onClose, viewerData }: ViewerDialogProps)
               ) : (
                 viewerData.map((viewer, index) => (
                   <TableRow key={index}>
-                    <TableCell className={`${dir === 'rtl' ? 'text-right pr-4' : ''}`}>{viewer.author}</TableCell>
-                    <TableCell className={`${dir === 'rtl' ? 'text-right pr-4' : ''}`}>{viewer.DateTime}</TableCell>
+                    <TableCell className={`${dir === 'rtl' ? 'text-right pr-4' : ''}`}>{viewer.CreatedBy}</TableCell>
+                    <TableCell className={`${dir === 'rtl' ? 'text-right pr-4' : ''}`}>{formatDate(viewer.FormattedDateTime)}</TableCell>
                   </TableRow>
                 ))
               )}

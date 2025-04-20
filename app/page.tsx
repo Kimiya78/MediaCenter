@@ -9,21 +9,63 @@ import { FolderProvider, useFolder, DirectionProvider } from "@/components/folde
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Breadcrumbs from "@/components/breadCrumbs";
 import { useState } from "react";
-import { I18nDirectionProvider } from "@/public/locales/I18nDirectionProvider"; // Import the provider
+import { I18nDirectionProvider } from "@/public/locales/I18nDirectionProvider";
+import { SidebarToggle } from "@/components/sidebarOpen-toggle"; // Import the new SidebarToggle component
+import { setFont } from "@/components/fontSwitcher.js"; 
+import { useEffect } from 'react';
+import { useDirection } from "@/components/folder-manager/context"; // Ensure this is the correct import
+
+
+
+
 
 export default function Page() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // State for sidebar visibility
+  
+  // const { dir } = useDirection(); 
+  // const isRtl = dir === 'rtl'; 
+
+  // useEffect(() => {
+  //   setFont(isRtl); // Set the font based on the direction
+  // }, [isRtl]);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen((prev) => !prev); // Toggle function
+  };
+
   return (
     <DirectionProvider>
-      <I18nDirectionProvider> {/* Wrap the app in I18nDirectionProvider */}
+      <I18nDirectionProvider> 
         <FolderProvider>
           <div className="flex bg-background">
-            <Sidebar />
-            <main className="grid grid-rows-[8rem_auto] w-full h-[calc(100vh_-_10rem)]">
+            {/* <Sidebar /> */}
+
+            {isSidebarOpen && <Sidebar />} 
+
+            <main className="grid grid-rows-[8rem_auto] w-full h-[calc(100vh_-_20rem)]">
               <div className="border-b bg-background grid grid-rows-[3re_1rem]">
                 <div className="flex h-[5rem] items-center justify-between px-4">
-                  <h1 className="text-xl font-semibold">Media Center</h1>
+                  <div className="flex items-center gap-2">
+                    {/* Sidebar Toggle Button */}
+                    <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div>
+                          <SidebarToggle isOpen={isSidebarOpen} onToggle={toggleSidebar} />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" align="center" className="max-w-[110px]">
+                        <p className="text-sm">Toggle Sidebar</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    </TooltipProvider>
+
+                    <h1 className="text-xl font-semibold">Media Center</h1>
+                  </div>
+
                   <TooltipProvider>
                     <div className="flex items-center gap-2">
+
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div>
@@ -45,7 +87,9 @@ export default function Page() {
                           <p className="text-sm">Toggle Theme</p>
                         </TooltipContent>
                       </Tooltip>
+
                     </div>
+                    
                   </TooltipProvider>
                 </div>
                 <div className="flex h-[3rem] items-center justify-between px-4">

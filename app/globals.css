@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -199,25 +201,7 @@
     text-decoration: underline;
   }
 
-  /* app/global.css */
-
-  @font-face {
-    font-family: 'IranYekanBakh';
-    src: url('/fonts/YekanBakhRegular.woff2') format('woff2');
-    font-weight: normal;
-    font-style: normal;
-  }
-
-  /* app/global.css */
-
-  * {
-    font-family: 'IranYekanBakh', sans-serif;
-  }
-
-  .persian-text {
-    font-family: 'IranYekanBakh', sans-serif;
-  }
-
+  
   
 
   /* @layer base {
@@ -229,4 +213,46 @@
   }
 }
      */
+
+  /* app/global.css */
+/* 
+  @font-face {
+    font-family: 'IranYekanBakh';
+    src: url('/fonts/YekanBakhRegular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+  }
+  
+  * {
+    font-family: 'IranYekanBakh', sans-serif;
+  } */
+
+ /* ----------------------------------------------------------- */
+ @font-face {
+  font-family: 'IranYekanBakh';
+  src: url('./IranYekanBakh/YekanBakhRegular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* Define a CSS variable for font-family */
+:root {
+  --font-family: 'GradianFont', sans-serif; /* Default font */
+}
+
+/* Set the font-family based on direction */
+[dir="rtl"] {
+  font-family: var(--font-family) !important; /* Use the variable for RTL */
+}
+
+[dir="lrt"] {
+  font-family: var(--font-family) !important; /* Use the variable for LRT */
+}
+
+/* Remove the global font-family setting for all elements */
+* {
+  /*font-family: var(--font-family);  Use the variable for all elements */
+  font-family: 'IranYekanBakh', sans-serif;
+}
+
 

@@ -20,6 +20,9 @@ import { PasswordDialog } from "@/components/password-dialog";
 import LinksDialog  from "@/components/links-dialog";
 import { useDirection } from "@/components/folder-manager/context"
 import { useTranslation } from "react-i18next";
+import { Toaster } from "@/components/ui/sonner";
+import { createPortal } from "react-dom";
+
 
 
 interface ShareMenuProps {
@@ -38,7 +41,9 @@ interface ShareMenuProps {
   onLockToggle?: () => void;
   onDelete?: () => void;
   onRename?: (newName: string) => void;
-  onFileRemove?: (correlationGuid: string) => void; 
+  onFileRemove?: (correlationGuid: string) => void;
+  files?: any[];
+  setFiles?: (files: any[]) => void;
 }
 
 export function ShareMenu({
@@ -58,6 +63,8 @@ export function ShareMenu({
   onDelete,
   onRename,
   onFileRemove,
+  files = [],
+  setFiles,
 }: ShareMenuProps) {
   const { t } = useTranslation();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -92,9 +99,8 @@ export function ShareMenu({
   
   const handleDownload = async () => {
     try {
-      debugger
       const downloadUrl = `${ConfigURL.baseUrl}/downloading_file`;
-
+      
       const response = await axios.post(
         downloadUrl,
         {
@@ -114,7 +120,6 @@ export function ShareMenu({
       const contentDisposition = response.headers["content-disposition"] || "";
       const videoTypes = ["mp4", "webm", "ogg", "avi", "mkv", "quicktime", "video/mp4"];
       const isVideo = videoTypes.some((type) => contentType.includes(type));
-      debugger
 
       const filename = contentDisposition
         ? contentDisposition.match(/filename="?([^"]+)"?/)?.[1]  //contentDisposition.match(/filename="([^"]+)"/)?.[1] 
@@ -122,7 +127,7 @@ export function ShareMenu({
 
       if (isVideo) {
         const videoContainer = document.getElementById("videoContainer");
-        if (!videoContainer) throw new Error("Video container not found.");
+        if (!videoContainer) throw new Error(t('error.video_container'));
 
         videoContainer.innerHTML = "";
 
@@ -139,7 +144,7 @@ export function ShareMenu({
         videoContainer.appendChild(videoPlayer);
 
         videoPlayer.load();
-        videoPlayer.play().catch((err) => console.error("Video playback error:", err));
+        videoPlayer.play().catch((err) => console.error(t('error.video_playback'), err));
       } else {
         const downloadUrl = URL.createObjectURL(response.data);
         const a = document.createElement("a");
@@ -152,7 +157,7 @@ export function ShareMenu({
       }
     } catch (error: any) {
       console.error("Download error:", error);
-      toast.error("Failed to download the file.");
+     // toast.error(t('toast.download_error'));
     }
   };
 
@@ -160,26 +165,26 @@ export function ShareMenu({
   const handleShare = async () => {
     try {
       // ✅ New share URL using correlationGuid
-      const shareUrl = `https://cloud.cinnagen.com/share?CorrelationGUID=${encodeURIComponent(correlationGuid)}`;
+      const shareUrl = `https://cgl1106.cinnagen:8289/share?CorrelationGUID=${encodeURIComponent(correlationGuid)}`;
       
-      const shareMessage = `این فایل مورد نظر جهت دانلود میباشد: ${shareUrl}`;
+      const shareMessage = t('share.message', { url: shareUrl });
   
       const shareData = {
-        title: `Check out this file: ${fileName}`,
-        text: `File: ${fileName}\nDescription: ${fileDescription}\nUploaded By: ${uploadedBy}\nUploaded On: ${uploadedOn}\n\n${shareMessage}`,
+        title: t('share.title', { fileName }),
+        text: t('share.text', { fileName, fileDescription, uploadedBy, uploadedOn, shareMessage }),
         url: shareUrl,
       };
   
       if (navigator.share) {
         await navigator.share(shareData);
-        toast.success("File shared successfully!");
+        //toast.success(t('toast.share_success'));
       } else {
         await navigator.clipboard.writeText(shareMessage);
-        toast.success("File link copied to clipboard!");
+        toast.success(t('toast.copy_success'));
       }
     } catch (error) {
       console.error("Error sharing file:", error);
-      toast.error("Failed to share the file.");
+      //toast.error(t('toast.share_error'));
     }
   };
   
@@ -199,59 +204,75 @@ export function ShareMenu({
       );
   
       if (response.status === 200) {
-        toast.success("File renamed successfully.");
+        toast.success(t('toast.rename_success', 'File renamed successfully.'));
   
         if (onRename) {
-          onRename(fileId, newName); // 🔥 Immediately tell parent to update UI
+          console.log("Renaming newName :", newName );
+          console.log("Renaming fileName:", fileName);
+          onRename( newName); // 🔥 Immediately tell parent to update UI
         }
       } else {
-        toast.error("Failed to rename the file.");
+        //toast.error(t('toast.rename_failed', 'Failed to rename the file.'));
       }
     } catch (error) {
       console.error("Error renaming file:", error);
-      toast.error("Error renaming file. Please try again.");
+      //toast.error(t('toast.rename_error', 'Error renaming file. Please try again.'));
     }
   };
   
 
-  const handleFileRemove = (correlationGuid) => {
-    setFiles((prevFiles) => prevFiles.filter((file) => file.correlationGuid !== correlationGuid));
-  };
+  const handleDelete = () => {
+    let isDeleting = false;
 
+    toast(t('toast.moved_to_trash'), {
+      duration: 3500,
+      style: {
+        backgroundColor: "black",
+        color: "white",
+        border: "none"
+      },
+      action: {
+        label: t('toast.undo'),
+        onClick: () => {
+          toast.dismiss();
+        }
+      },
+      onAutoClose: async () => {
+        if (isDeleting) return;
+        isDeleting = true;
 
-  // **Manage delete file**
-  const handleDelete = async () => {
-    try {
-      const confirmDelete = window.confirm(
-        `Are you sure you want to delete the file "${fileName}"?`
-      );
-      if (!confirmDelete) return;
-      debugger
-      const deleteUrl = `${ConfigURL.baseUrl}/delete`;
+        try {
+          const deleteUrl = `${ConfigURL.baseUrl}/delete`;
+          const response = await axios.delete(deleteUrl, {
+            data: {
+              CorrelationGUID: correlationGuid,
+              FolderID: folderId,
+              PasswordHash: null,
+            },
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            withCredentials: true,
+          });
 
-      const response = await axios.delete(deleteUrl, {
-        data: {
-          CorrelationGUID: correlationGuid,
-          FolderID: folderId,
-          PasswordHash: null,
-        },
-        headers: {
-          "Content-Type": "application/json",  
-          Accept: "application/json",         
-        },
-        withCredentials: true,
-      });
-
-      if (response.status === 200) {
-        toast.success("File deleted successfully.");
-        onFileRemove?.(correlationGuid); 
-      } else {
-        toast.error("Failed to delete the file.");
+          if (response.status === 200) {
+            if (onDelete) {
+              onDelete();
+            }
+            if (onFileRemove) {
+              onFileRemove(correlationGuid);
+            }
+          } else {
+            toast.error(t('toast.delete_failed'));
+          }
+        } catch (error) {
+          console.error("Error deleting file:", error);
+          toast.error(t('toast.delete_error'));
+          isDeleting = false;
+        }
       }
-    } catch (error: any) {
-      console.error("Error deleting file:", error);
-      toast.error("Error deleting file. Please try again.");
-    }
+    });
   };
 
 
@@ -259,7 +280,7 @@ export function ShareMenu({
   const handleViewer = async () => {
     try {
       const response = await axios.post(
-        `${ConfigURL.baseUrl}/get_viewers_info`,
+        `${ConfigURL.baseUrl}/get_viewers`,
         { FileGUID: fileId },
         { headers: { "Content-Type": "application/json" } }
       );
@@ -280,7 +301,7 @@ export function ShareMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className={`w-[160px] cursor-pointer  ${dir === "rtl" ? "text-right" : "text-left"}`}>
+        <DropdownMenuContent align="end" className={`w-[160px] cursor-pointer  ${dir === "rtl" ? "text-right" : "text-left"}`} forceMount={true}>
           <DropdownMenuItem onClick={handleShare} className={`cursor-pointer flex ${dir === "rtl" ? "flex-row-reverse" : "flex-row"}`}>
             <Share2 className={`${dir === "rtl" ? "ml-2" : "mr-2"} h-4 w-4`} />
             {t('menu.share')}
@@ -305,7 +326,7 @@ export function ShareMenu({
             <Eye className={`${dir === "rtl" ? "ml-2" : "mr-2"} h-4 w-4`} />
             {t('menu.viewer')}
           </DropdownMenuItem>
-
+{/* 
           <DropdownMenuItem onClick={onLockToggle} className={`cursor-pointer flex ${dir === "rtl" ? "flex-row-reverse" : "flex-row"}`}>
             {requiresPassword ? (
               <>
@@ -318,7 +339,7 @@ export function ShareMenu({
                 {t('menu.unlock')}
               </>
             )}
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
 
           <DropdownMenuItem onClick={handleLinksClick} className={`cursor-pointer flex ${dir === "rtl" ? "flex-row-reverse" : "flex-row"}`}>
             <Link className={`${dir === "rtl" ? "ml-2" : "mr-2"} h-4 w-4`} />
@@ -337,6 +358,7 @@ export function ShareMenu({
           console.log("Share with:", email, permission);
           setShareDialogOpen(false);
         }}
+        shareUrl={`https://cgl1106.cinnagen:8289/share?CorrelationGUID=${encodeURIComponent(correlationGuid)}`}
       />
 
       {/* Rename Dialog */}
@@ -356,6 +378,9 @@ export function ShareMenu({
         onClose={() => setIsDialogOpen(false)}
         objectPass={correctPassword}
         onPasswordSubmit={handlePasswordSubmit}
+        FileID={fileId}
+        AttachmentUrlGuid={attachmentUrlGuid}
+        fileName={fileName}
       /> 
 
 
@@ -369,6 +394,25 @@ export function ShareMenu({
       {isLinksDialogOpen && (
         <LinksDialog isOpen={isLinksDialogOpen} onClose={closeLinksDialog} fileGUID={correlationGuid} AttachmentUrlGuid={attachmentUrlGuid} FileID={fileId} fileName={fileName} />
       )}
+
+
+
+  {typeof window !== "undefined" &&
+    createPortal(
+      <Toaster
+        richColors
+        position="bottom-right"
+        className="[&>section]:flex [&>section]:items-start [&>section]:justify-between [&>section]:gap-2"
+        toastOptions={{
+          classNames: {
+            toast: "",
+            title: "font-semibold text-gray-900",
+            description: "text-gray-600 text-sm",
+          },
+        }}
+      />,
+      document.body
+    )}
 
     </> 
   );
