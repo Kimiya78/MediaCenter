@@ -24,6 +24,8 @@ export function FileCard({ file: initialFile, onRename, onFileRemove }: FileCard
   const { dir } = useDirection();
   const { t } = useTranslation();
 
+  console.log("🟢 FileCard received file: 🟢", initialFile);
+
   useEffect(() => {
     setFile(initialFile);
   }, [initialFile]);

@@ -13,7 +13,7 @@ import moment from "jalali-moment";
 
 interface FileCardProps {
   file: FileItem;
-  onRename: (fileId: string, newName: string) => void;
+  onRename: (fileId: string, newName: string, newDescription:string ) => void;
   onFileRemove: (correlationGuid: string) => void; 
 }
 
@@ -46,17 +46,17 @@ export function FileCard({ file: initialFile, onRename, onFileRemove }: FileCard
   };
 
   // Create an adapter function that matches ShareMenu's expected signature
-  const handleRenameAdapter = (newName: string) => {
-    handleRenameFile(file.id, newName);
+  const handleRenameAdapter = (newName: string , newDescription: string) => {
+    handleRenameFile(file.id, newName, newDescription);
   };
 
-  const handleRenameFile = (fileId: string, newName: string) => {
+  const handleRenameFile = (fileId: string, newName: string, newDescription: string) => {
     if (!newName || newName.trim() === "") {
       console.error("Invalid new name provided for renaming.");
       return;
     }
     
-    onRename(file.name, newName.trim());
+    onRename(file.name, newName.trim() ,  newDescription.trim());
     setFile(prevFile => ({
       ...prevFile,
       name: newName.trim()
@@ -104,7 +104,7 @@ export function FileCard({ file: initialFile, onRename, onFileRemove }: FileCard
             requiresPassword={false}
             trigger={<MoreVertical className="h-4 w-4 cursor-pointer" />}
             isLocked={file.isLocked}
-            onRename={(newName) => handleRenameFile(file.id, newName)}
+            onRename={(newName, description) => handleRenameFile(file.id, newName, newDescription)} // ✨ تغییر: ارسال description
             onFileRemove={handleFileRemove}
           />
         </div>

@@ -160,35 +160,95 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
   };
 
   // Filtering logic - only for file type, search is handled by API
+  // const filteredFiles = files.filter((file) => {
+  //   if (fileType === "all") return true;
+
+  //   const typeMap: Record<string, string[]> = {
+  //     pictures: ["png", "jpg", "jpeg"],
+  //     videos: ["mp4", "mov", "avi"],
+  //     documents: ["pptx", "pdf", "docx", "xlsx", "txt"],
+  //     pdf: ["pdf"],
+  //     docx: ["docx"],
+  //     pptx: ["pptx"],
+  //     xlsx: ["xlsx"],
+  //     png: ["png"],
+  //     jpg: ["jpg"],
+  //     jpeg: ["jpeg"],
+  //     txt: ["txt"],
+  //     all: ["png", "jpg", "jpeg", "mp4", "mov", "avi", "pptx", "pdf", "docx", "xlsx", "txt"]
+  //   };
+
+  //   const allowedExtensions = typeMap[fileType];
+  //   if (!allowedExtensions) return false;
+
+  //   const fileExtension = (file.type || "").toLowerCase();
+  //   return allowedExtensions.includes(fileExtension);
+  // });
   const filteredFiles = files.filter((file) => {
     if (fileType === "all") return true;
-
     const typeMap: Record<string, string[]> = {
-      pictures: ["png", "jpg", "jpeg"],
-      videos: ["mp4", "mov", "avi"],
-      documents: ["pptx", "pdf", "docx", "xlsx", "txt"],
-      pdf: ["pdf"],
-      docx: ["docx"],
-      pptx: ["pptx"],
-      xlsx: ["xlsx"],
-      png: ["png"],
-      jpg: ["jpg"],
-      jpeg: ["jpeg"],
-      txt: ["txt"],
-      all: ["png", "jpg", "jpeg", "mp4", "mov", "avi", "pptx", "pdf", "docx", "xlsx", "txt"]
+        pictures: ["png", "jpg", "jpeg"],
+        videos: ["mp4", "mov", "avi"],
+        documents: ["pptx", "pdf", "docx", "xlsx", "txt"],
+        pdf: ["pdf"],
+        docx: ["docx"],
+        pptx: ["pptx"],
+        xlsx: ["xlsx"],
+        png: ["png"],
+        jpg: ["jpg"],
+        jpeg: ["jpeg"],
+        txt: ["txt"],
+        all: ["png", "jpg", "jpeg", "mp4", "mov", "avi", "pptx", "pdf", "docx", "xlsx", "txt"]
     };
-
     const allowedExtensions = typeMap[fileType];
     if (!allowedExtensions) return false;
-
     const fileExtension = (file.type || "").toLowerCase();
     return allowedExtensions.includes(fileExtension);
-  });
+});
+
 
   // Sorting logic
   const sortedFiles = [...filteredFiles].sort((a, b) => {
     const aValue = a[sortConfig.key];
     const bValue = b[sortConfig.key];
+
+    if (sortConfig.key === "createdDate" && typeof aValue === "string" && typeof bValue === "string") {
+      // Handle date sorting for both LTR and RTL formats
+      let aDate, bDate;
+      
+      if (dir === "rtl") {
+        // For RTL format: "HH:mm - YYYY/MM/DD"
+        const aParts = aValue.split(" - ");
+        const bParts = bValue.split(" - ");
+        aDate = moment(`${aParts[1]} - ${aParts[0]}`, "YYYY/MM/DD - HH:mm");
+        bDate = moment(`${bParts[1]} - ${bParts[0]}`, "YYYY/MM/DD - HH:mm");
+      } else {
+        // For LTR format: "YYYY/MM/DD - HH:mm"
+        aDate = moment(aValue, "YYYY/MM/DD - HH:mm");
+        bDate = moment(bValue, "YYYY/MM/DD - HH:mm");
+      }
+
+      return sortConfig.direction === "asc" 
+        ? aDate.valueOf() - bDate.valueOf()
+        : bDate.valueOf() - aDate.valueOf();
+    }
+
+    if (sortConfig.key === "size" && typeof aValue === "string" && typeof bValue === "string") {
+      // Parse size strings (e.g., "1.23 MB" or "456 KB") into numbers
+      const parseSize = (sizeStr: string): number => {
+        const [value, unit] = sizeStr.trim().split(/\s+/);
+        const numValue = parseFloat(value);
+        if (unit === "MB") return numValue * 1024; // Convert MB to KB for comparison
+        return numValue; // Already in KB
+      };
+
+      const aSize = parseSize(aValue);
+      const bSize = parseSize(bValue);
+
+      return sortConfig.direction === "asc" 
+        ? aSize - bSize
+        : bSize - aSize;
+    }
 
     if (typeof aValue === "string" && typeof bValue === "string") {
       return sortConfig.direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
@@ -234,38 +294,71 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
     }
   };
 
+  const MIME_TYPE_TO_EXT = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "application/pdf": "pdf",
+    "video/mp4": "mp4",
+    "text/plain": "txt",
+    // Add more mappings as needed
+  };
+  
+  // Helper function to map MIME types to extensions
+  const getExtensionFromMimeType = (mimeType) => {
+    return MIME_TYPE_TO_EXT[mimeType];
+  };
+  
+
   // Upload logic with animation
-  const addNewFile = (file: File, description: string) => {
-    console.log("direction now is this value : " , dir)
-    debugger
+  const addNewFile = (file: File, description: string, mimeType: string) => {
+    console.log("direction now is this value : ", dir);
+  
+    // Determine file extension
+    // const fileExtensionFromName = file.name.split(".").pop()?.toLowerCase();
+    // const fileExtension = fileExtensionFromName || getExtensionFromMimeType(mimeType) || "unknown"0;
+      // گرفتن اکستنشن از نام فایل
+  const fileExtensionFromName = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : '';
+  // اگر type خالی بود، از mimeType یا unknown استفاده کن
+  const fileExtension = fileExtensionFromName || (file.type ? file.type.split('/').pop() : '') || "unknown";
+  
+    console.log("🟡   برای اسم فایل اکستنشن :" , fileExtensionFromName, 'فایل اکستنشن ' ,  fileExtension);
+    console.log("🟡  نام فایل  :", file.name);
+    console.log("🟡  تایپ فایل  :", file.type);
+  
     const today = new Date();
+    let createdDate;
+    if (dir === "rtl") {
+      // تبدیل تاریخ به شمسی با فرمت مشابه سایر فایل‌ها
+      const miladi = moment(today).format("YYYY/MM/DD - HH:mm");
+      createdDate = convertToJalali(miladi).replace(/(\d{4}\/\d{2}\/\d{2}) - (\d{2}:\d{2})/, "$2 - $1");
+    } else {
+      createdDate = moment(today).format("YYYY/MM/DD - HH:mm");
+    }
+    console.log( '🟢🟢File Name :🟢🟢' , file.name , fileType )
     const newFile: FileItem = {
       id: Date.now().toString(),
       name: file.name,
-      type: file.name.split(".").pop()?.toLowerCase() || "unknown",
+      type: fileExtension,
       size: formatFileSize(file.size),
       createdBy: "You",
-      createdDate: dir === "rtl" 
-        ? moment(today).locale("fa").format("HH:mm - YYYY/MM/DD")
-        : moment(today).format("YYYY/MM/DD - HH:mm"),
+      createdDate: createdDate,
       description: description,
       permission: "owner",
-      isLocked: false
+      isLocked: false,
     };
-
+    debugger
+  
     // Add the new file at the beginning of the list with animation
     setFiles((prevFiles) => {
       const updatedFiles = [newFile, ...prevFiles];
       return updatedFiles;
     });
     setNewFileId(newFile.id);
-
+  
     // Remove animation after 2 seconds
     setTimeout(() => {
       setNewFileId(null);
     }, 2000);
-
-    
   };
 
   // Rename logic with animation
@@ -405,6 +498,7 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
     // Combine them with new file first
     const displayFiles = newFile ? [newFile, ...filteredAndSortedFiles] : filteredAndSortedFiles;
 
+    console.log("🟡 Rendering files:", displayFiles);
     if (view === "grid") {
       return (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 lg:grid-cols-3 gap-4">
@@ -466,6 +560,24 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
           </table>
         </div>
       );
+    }
+  };
+
+  const getFileIcon = (fileType: string) => {
+    switch (fileType) {
+      case 'png':
+      case 'jpg':
+      case 'jpeg':
+        return <ImageIcon />;
+      case 'pdf':
+        return <FileIcon />;
+      case 'mp4':
+      case 'mov':
+      case 'avi':
+        return <Video />;
+      // سایر انواع فایل
+      default:
+        return <FileIcon />; // آیکون پیش‌فرض
     }
   };
 
@@ -787,7 +899,7 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
         onUpload={(file, description) => {
-          addNewFile(file, description)
+          addNewFile(file, description , file.type)
           setIsUploadOpen(false)
         }}
         destination="My Drive"

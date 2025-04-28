@@ -85,7 +85,8 @@
         "rename": "ویرایش", 
         "renameSuccess": "فایل با موفقیت ویرایش شد",
         "renameFailed": "ویرایش فایل با شکست مواجه شد",
-        "renameError": "خطا در ویرایش فایل. لطفاً دوباره تلاش کنید"
+        "renameError": "خطا در ویرایش فایل. لطفاً دوباره تلاش کنید",
+        "description": "توضیحات"
       },
       "uploadDialog": {
         "title": "بارگذاری  فایل" ,
@@ -155,7 +156,8 @@
       "disableLabel": "غیرفعال؟",
       "submitting": "در حال ارسال...",
       "submit": "ثبت",
-      "initialURLDisabledMessage": "این لینک ساختار اولیه است و نمی‌توان آن را غیرفعال کرد."
+      "initialURLDisabledMessage": "این لینک ساختار اولیه است و نمی‌توان آن را غیرفعال کرد.",
+      "expiresOnRequired": "فیلد اجباری"
     },
     "error": {
       "video_container": "ظرف ویدیو یافت نشد",

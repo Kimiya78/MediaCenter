@@ -40,7 +40,7 @@ interface ShareMenuProps {
   isLocked?: boolean;
   onLockToggle?: () => void;
   onDelete?: () => void;
-  onRename?: (newName: string) => void;
+  onRename?: (newName: string , description: string) => void;
   onFileRemove?: (correlationGuid: string) => void;
   files?: any[];
   setFiles?: (files: any[]) => void;
@@ -190,33 +190,34 @@ export function ShareMenu({
   
 
   // **Manage rename file**
-  const handleRename = async (newName: string) => {
+  const handleRename = async (newName: string, description: string) => {
     try {
       const response = await axios.put(
         `${ConfigURL.baseUrl}/rename`,
         {
           CorrelationGUID: correlationGuid,
           FileName: newName,
+          Description: description, // ✨ اضافه شده: توضیحات فایل
         },
         {
           headers: { "Content-Type": "application/json" },
         }
       );
-  
+
       if (response.status === 200) {
         toast.success(t('toast.rename_success', 'File renamed successfully.'));
-  
+
         if (onRename) {
-          console.log("Renaming newName :", newName );
+          console.log("Renaming newName :", newName);
           console.log("Renaming fileName:", fileName);
-          onRename( newName); // 🔥 Immediately tell parent to update UI
+          onRename(newName , description); // 🔥 Immediately tell parent to update UI
         }
       } else {
-        //toast.error(t('toast.rename_failed', 'Failed to rename the file.'));
+        // toast.error(t('toast.rename_failed', 'Failed to rename the file.'));
       }
     } catch (error) {
       console.error("Error renaming file:", error);
-      //toast.error(t('toast.rename_error', 'Error renaming file. Please try again.'));
+      // toast.error(t('toast.rename_error', 'Error renaming file. Please try again.'));
     }
   };
   
@@ -367,9 +368,10 @@ export function ShareMenu({
         onClose={() => setRenameDialogOpen(false)}
         objectName={fileName}
         objectType="File"
-        onRename={(newName) => {
-          handleRename(newName)
-          setRenameDialogOpen(false)
+        objectDescription={fileDescription}
+        onRename={(newName, description) => {
+          handleRename(newName, description); 
+          setRenameDialogOpen(false);
         }}
       />
 

@@ -51,12 +51,16 @@
   }
 }
 
+
 @layer base {
   * {
     @apply border-border;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   body {
     @apply bg-background text-foreground;
+    text-rendering: optimizeLegibility;
   }
 }
 
@@ -89,6 +93,30 @@
     }
   }
 }
+
+/* Pixel-perfect spacing utilities */
+@layer utilities {
+  .pixel-perfect {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+
+  .pixel-perfect-text {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .pixel-perfect-border {
+    border-width: 1px;
+    border-style: solid;
+  }
+
+  .pixel-perfect-shadow {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+}
+
 
 /* Ensure consistent card heights */
 .card-content {
@@ -200,7 +228,79 @@
   .breadcrumb a:hover {
     text-decoration: underline;
   }
+  
 
+/* Calendar Icon */
+.custom-datepicker .calendar-icon {
+  cursor: pointer;
+  color: #999;
+}
+
+.custom-datepicker .calendar-icon:hover {
+  color: #007bff;
+}
+
+/* Date Picker */
+.custom-datepicker .datepicker-container {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 1000;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  width: 250px;
+  direction: rtl;
+}
+
+.custom-datepicker .datepicker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.custom-datepicker .datepicker-header button {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+}
+
+.custom-datepicker .datepicker-body table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.custom-datepicker .datepicker-body td {
+  padding: 8px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.custom-datepicker .datepicker-body td.selected {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.custom-datepicker .datepicker-body td.today {
+  font-weight: bold;
+}
+
+.custom-datepicker .datepicker-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.custom-datepicker .datepicker-footer button {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+}
+  /* ----------------------------------------------------------- */
   
   
 
@@ -227,32 +327,39 @@
     font-family: 'IranYekanBakh', sans-serif;
   } */
 
+
  /* ----------------------------------------------------------- */
  @font-face {
   font-family: 'IranYekanBakh';
-  src: url('./IranYekanBakh/YekanBakhRegular.woff2') format('woff2');
+  src: url('./IranYekanBakh/YekanBakhRegular.woff2') format('woff2'),
+        url('./IranYekanBakh/YekanBakhRegular.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
 }
 
-/* Define a CSS variable for font-family */
-:root {
-  --font-family: 'GradianFont', sans-serif; /* Default font */
-}
-
-/* Set the font-family based on direction */
 [dir="rtl"] {
-  font-family: var(--font-family) !important; /* Use the variable for RTL */
+  font-family: 'IranYekanBakh', sans-serif; 
 }
 
 [dir="lrt"] {
-  font-family: var(--font-family) !important; /* Use the variable for LRT */
+  font-family: sans-serif; 
 }
 
-/* Remove the global font-family setting for all elements */
-* {
-  /*font-family: var(--font-family);  Use the variable for all elements */
+/* * {
   font-family: 'IranYekanBakh', sans-serif;
-}
+}  */
 
-
+@font-face {
+  font-family: 'Estedad';
+  src: url('./IranYekanBakh/YekanBakhRegular.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  }
+  html[dir="rtl"] * {
+    font-family: var(--font-estedad-rtl);
+  }
+  html[dir="ltr"] * {
+    font-family: var(--font-estedad);
+  }
+  

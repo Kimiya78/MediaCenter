@@ -57,12 +57,20 @@ export function ViewerDialog({ isOpen, onClose, viewerData }: ViewerDialogProps)
                   </TableCell>
                 </TableRow>
               ) : (
-                viewerData.map((viewer, index) => (
-                  <TableRow key={index}>
-                    <TableCell className={`${dir === 'rtl' ? 'text-right pr-4' : ''}`}>{viewer.CreatedBy}</TableCell>
-                    <TableCell className={`${dir === 'rtl' ? 'text-right pr-4' : ''}`}>{formatDate(viewer.FormattedDateTime)}</TableCell>
-                  </TableRow>
-                ))
+                // viewerData.map((viewer, index) => (
+                //   <TableRow key={index}>
+                //     <TableCell className={`${dir === 'rtl' ? 'text-right pr-4' : ''}`}>{viewer.CreatedBy}</TableCell>
+                //     <TableCell className={`${dir === 'rtl' ? 'text-right pr-4' : ''}`}>{formatDate(viewer.FormattedDateTime)}</TableCell>
+                //   </TableRow>
+                // ))
+                viewerData
+                  .sort((a, b) => moment(b.FormattedDateTime, "YYYY/MM/DD - HH:mm").valueOf() - moment(a.FormattedDateTime, "YYYY/MM/DD - HH:mm").valueOf())
+                  .map((viewer, index) => (
+                    <TableRow key={index}>
+                      <TableCell className={`${dir === 'rtl' ? 'text-right pr-4' : ''}`}>{viewer.CreatedBy}</TableCell>
+                      <TableCell className={`${dir === 'rtl' ? 'text-right pr-4' : ''}`}>{formatDate(viewer.FormattedDateTime)}</TableCell>
+                    </TableRow>
+                  ))
               )}
             </TableBody>
           </Table>

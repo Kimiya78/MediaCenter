@@ -86,7 +86,8 @@
       "rename": "Rename",
       "renameSuccess": "File renamed successfully",
       "renameFailed": "Failed to rename the file",
-      "renameError": "Error renaming file. Please try again"
+      "renameError": "Error renaming file. Please try again",
+      "description" : "Description"
     },
     "uploadDialog": {
       "title": "Upload File",
@@ -143,7 +144,8 @@
       "disableLabel": "Disable?",
       "submitting": "Submitting...",
       "submit": "Submit",
-      "initialURLDisabledMessage": "This is the initial URL and cannot be disabled."
+      "initialURLDisabledMessage": "This is the initial URL and cannot be disabled.",
+      "expiresOnRequired": "Mandatory Field"
     },
     "toast": {
       "moved_to_trash": "File moved to trash",

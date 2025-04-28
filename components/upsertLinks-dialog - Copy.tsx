@@ -18,8 +18,10 @@ import { Edit2 } from "lucide-react";
 import NexxFetch from "@/hooks/response-handling"; // ✅ Custom API handler
 import { useDirection } from "@/components/folder-manager/context"; // Import direction context
 import { useTranslation } from "react-i18next";
+//import DatePicker from 'react-datepicker2';
 import moment from 'moment-jalaali';
 import { DateObject } from "react-multi-date-picker";
+//import DatePicker from "react-multi-date-picker";
 import jalali from "dayjs-jalali";
 import DatePicker, { Calendar } from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian"; // Jalali calendar
@@ -78,38 +80,37 @@ export function UpsertLinksDialog({
 
 
   
-
   const formatDateForAPI = (date: DateObject | moment.Moment | string | null): string | null => {
     if (!date) return null;
 
-  try {
-    // اگر تاریخ از نوع DateObject باشد (مربوط به react-multi-date-picker)
-    if (date instanceof DateObject) {
-      const gregorianDate = date.convert("gregorian"); // تبدیل به تقویم میلادی
-      return gregorianDate.format("YYYY-MM-DD HH:mm:ss"); // فرمت میلادی برای API
+    try {
+      if (date instanceof DateObject) {
+        // Convert Jalali to Gregorian
+        const gregorianDate = date.convert("gregorian");
+        return gregorianDate.format("YYYY-MM-DD HH:mm:ss");
+      } 
+      
+      if (moment.isMoment(date)) {
+        // Convert Jalali to Gregorian
+        const gregorianDate = date.clone().locale('en');
+        return gregorianDate.format("YYYY-MM-DD HH:mm:ss");
+      } 
+      
+      if (typeof date === "string") {
+        // Parse string to moment, convert to Gregorian and format
+        const jalaliDate = moment(date, "YYYY/MM/DD", "fa");
+        const gregorianDate = jalaliDate.clone().locale('en');
+        return gregorianDate.format("YYYY-MM-DD HH:mm:ss");
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return null;
     }
-
-    // اگر تاریخ از نوع moment باشد
-    if (moment.isMoment(date)) {
-      return date.locale('en').format("YYYY-MM-DD HH:mm:ss"); // تبدیل به میلادی
-    }
-
-    // اگر تاریخ به صورت رشته باشد
-    if (typeof date === "string") {
-      // فرض بر این است که رشته شمسی است (jYYYY/jMM/jDD)
-      const jalaliDate = moment(date, "jYYYY/jMM/jDD HH:mm:ss");
-      return jalaliDate.format("YYYY-MM-DD HH:mm:ss"); // تبدیل به میلادی
-    }
-
-    return null;
-  } catch (error) {
-    console.error("Error formatting date:", error);
-    return null;
-  }
-};
-  
-  // console.log(" 0000000000 ExpiresOn:", expiresOn);
-  // console.log(" 1111111111 Formatted ExpiresOn:", formatDateForAPI(expiresOn));
+  };
+  console.log(" 0000000000 Formatted ExpiresOn:", formatDateForAPI(expiresOn));
+  console.log(" 0000000000 Formatted ExpiresOn:", expiresOn);
 
 
   useEffect(() => {
@@ -233,28 +234,11 @@ const deleteMutation = useMutation({
 });
 
   const handleSubmit = () => {
-    // const formattedDate = formatDateForAPI(expiresOn);
-    // if (!formattedDate) {
-    //   console.error("Invalid date");
-    //   return;
-    // }
-    // تاریخ شمسی رو به میلادی تبدیل می‌کنیم
-    const gregorianDate = expiresOn.toDate(); // تبدیل به تاریخ میلادی
-
-    // فرمت کردن تاریخ به فرمت "YYYY-MM-DD HH:mm:ss"
-    const year = gregorianDate.getFullYear();
-    const month = String(gregorianDate.getMonth() + 1).padStart(2, '0'); // ماه‌ها از 0 شروع می‌شن
-    const day = String(gregorianDate.getDate()).padStart(2, '0');
-    const hours = String(gregorianDate.getHours()).padStart(2, '0');
-    const minutes = String(gregorianDate.getMinutes()).padStart(2, '0');
-    const seconds = String(gregorianDate.getSeconds()).padStart(2, '0');
-
-    const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-
-    console.log("******* gregorianDate *****", formattedDate);
-      
-  console.log(" *******  gregorianDate  *****", gregorianDate);
-
+    const formattedDate = formatDateForAPI(expiresOn);
+    if (!formattedDate) {
+      console.error("Invalid date");
+      return;
+    }
 
     const basePayload: LinkPayload = {
       FileGUID: correlationGuid,

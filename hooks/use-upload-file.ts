@@ -29,6 +29,12 @@ export function useUploadFile() {
         formData.append(key, value);
       });
 
+      console.log("🟡 Uploading file:", {
+        originalName: data.file.name,
+        type: data.file.type,
+        size: data.file.size
+      });
+
       const response = await axios.post(`${ConfigURL.baseUrl}/create`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -42,9 +48,15 @@ export function useUploadFile() {
           } : undefined
       });
 
+      console.log("🟡 API Response:", response.data);
+
       return {
         success: true,
-        data: response.data
+        data: {
+          ...response.data,
+          name: response.data.file_name || data.file.name,
+          type: response.data.file_extension || data.file.type || 'unknown'
+        }
       };
     } catch (error) {
       console.error('Upload error:', error);
