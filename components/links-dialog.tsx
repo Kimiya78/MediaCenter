@@ -95,9 +95,15 @@ export default function LinksDialog({ isOpen, onClose, fileGUID, AttachmentUrlGu
       const videoTypes = ["mp4", "webm", "ogg", "avi", "mkv", "quicktime", "video/mp4"];
       const isVideo = videoTypes.some((type) => contentType.includes(type));
 
-      const filename = contentDisposition
+      let filename = contentDisposition
         ? contentDisposition.split("filename=")[1]?.replace(/"/g, "")
         : fileName;
+
+      // Add extension if missing
+      if (!filename.includes('.')) {
+        const extension = getFileTypeFromMimeType(contentType);
+        filename = `${filename}.${extension}`;
+      }
 
       if (isVideo) {
         const videoContainer = document.getElementById("videoContainer");

@@ -17,23 +17,23 @@ export interface FileItem {
   isNew?: boolean
 }
 
+export interface APIFileItem {
+  CorrelationGUID: string;
+  FileGUID: string;
+  FileName: string;
+  FileExtension: string;
+  FileSize: number;
+  CreatedBy: string;
+  CreatedDateTime: string;
+  Description: string;
+  allowDeleteFile: string;
+}
+
 export interface APIResponse {
-  data: {
-    items: Array<{
-      CorrelationGUID: string;
-      FileGUID: string;
-      FileName: string;
-      FileExtension: string;
-      FileSize: number;
-      CreatedBy: string;
-      CreatedDateTime: string;
-      Description: string;
-      allowDeleteFile: string;
-    }>;
-    total_records: number;
-    page_size: number;
-    page_number: number;
-  };
+  items: APIFileItem[];
+  total_records: number;
+  page_size: number;
+  page_number: number;
 }
 
 export interface SortConfig {

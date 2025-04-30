@@ -10,9 +10,20 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { useFolder } from "@/components/folder-manager/context";
+import { useEffect } from "react";
 
 export default function Breadcrumbs() {
   const { selectedFoldersArray, setSelectedFolderId, setSelectedFoldersArray } = useFolder(); // Get folder navigation data and setters from context
+
+  // Update document title whenever selectedFoldersArray changes
+  useEffect(() => {
+    if (selectedFoldersArray && selectedFoldersArray.length > 0) {
+      const breadcrumbPath = ['Media Center', ...selectedFoldersArray.map(folder => folder.name)];
+      document.title = breadcrumbPath.join(' > ');
+    } else {
+      document.title = 'Media Center';
+    }
+  }, [selectedFoldersArray]);
 
   if (!selectedFoldersArray || selectedFoldersArray.length === 0) return null;
 

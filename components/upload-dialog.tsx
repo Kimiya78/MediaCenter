@@ -17,7 +17,7 @@ import ConfigURL from "@/config";
 interface UploadDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpload?: (file: File, description: string) => void; // Callback to pass new file data
+  onUpload?: (file: File, description: string, mimeType: string) => void; // Callback to pass new file data
   destination?: string;
 }
 
@@ -94,15 +94,58 @@ export function UploadDialog({ isOpen, onClose, onUpload, destination }: UploadD
       setUploading(true);
       setProgress(0);
 
+      // Detect MIME type and extension
+      let mimeType = selectedFile.type;
+      let fileName = selectedFile.name;
+      
+      // If no MIME type or generic type, try to detect from file content
+      if (!mimeType || mimeType === 'application/octet-stream') {
+        const buffer = await selectedFile.slice(0, 4096).arrayBuffer();
+        const arr = new Uint8Array(buffer);
+        
+        // Check file signatures
+        if (arr[0] === 0x89 && arr[1] === 0x50 && arr[2] === 0x4E && arr[3] === 0x47) {
+          mimeType = 'image/png';
+        } else if (arr[0] === 0xFF && arr[1] === 0xD8) {
+          mimeType = 'image/jpeg';
+        } else if (arr[0] === 0x25 && arr[1] === 0x50 && arr[2] === 0x44 && arr[3] === 0x46) {
+          mimeType = 'application/pdf';
+        } else if (arr[0] === 0x50 && arr[1] === 0x4B) {
+          // Could be docx, xlsx, pptx, zip
+          if (fileName.endsWith('.docx')) {
+            mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          } else if (fileName.endsWith('.xlsx')) {
+            mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+          } else if (fileName.endsWith('.pptx')) {
+            mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+          } else {
+            mimeType = 'application/zip';
+          }
+        }
+      }
 
-      // const formData = new FormData();
-      // formData.append("EntityGUID", "0xBD4A81E6A803");
-      // formData.append("EntityDataGUID", "0x85AC4B90382C");
-      // formData.append("ServiceCategoryID", "");
-      // formData.append("ItemID", "");
-      // formData.append("Description", description);
-      // formData.append("ParentfolderId", selectedFolderId.toString()); // Use selectedFolderId from context
-      // formData.append("file", selectedFile);
+      // Get file extension from MIME type
+      const extensionMap: { [key: string]: string } = {
+        'image/png': 'png',
+        'image/jpeg': 'jpg',
+        'application/pdf': 'pdf',
+        'video/mp4': 'mp4',
+        'text/plain': 'txt',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+        'application/zip': 'zip'
+      };
+
+      const extension = extensionMap[mimeType] || 'bin';
+      
+      // Ensure filename has correct extension
+      if (!fileName.includes('.') || !fileName.toLowerCase().endsWith(`.${extension}`)) {
+        fileName = `${fileName.split('.')[0]}.${extension}`;
+      }
+
+      // Create new File object with correct name and type
+      const fileWithProperType = new File([selectedFile], fileName, { type: mimeType });
 
       const uploadData = {
         EntityGUID: "0xBD4A81E6A803",
@@ -111,8 +154,16 @@ export function UploadDialog({ isOpen, onClose, onUpload, destination }: UploadD
         ItemID: "",
         Description: description,
         ParentfolderId: selectedFolderId.toString(),
-        file: selectedFile
+        file: fileWithProperType
       };
+
+      console.log("🟡 Uploading file:", {
+        originalName: selectedFile.name,
+        newName: fileName,
+        originalType: selectedFile.type,
+        detectedType: mimeType,
+        extension: extension
+      });
 
       const response = await uploadFile(uploadData, (progressEvent) => {
         const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -120,11 +171,12 @@ export function UploadDialog({ isOpen, onClose, onUpload, destination }: UploadD
       });
 
       if (response.success) {
-        // Pass the new file data to the parent component
-        onUpload?.(selectedFile, description);
+        // Pass the detected MIME type and proper filename to parent
+        onUpload?.(fileWithProperType, description, mimeType);
         onClose();
         setSelectedFile(null);
         setDescription("");
+        refetch(); // Refresh the file list
       } else {
         throw new Error(response.message || t("uploadDialog.uploadError"));
       }

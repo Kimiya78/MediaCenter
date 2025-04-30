@@ -169,7 +169,7 @@ export function Sidebar() {
   };
 
   return (
-    <div className="w-64 h-screen border-r bg-background text-foreground">
+    <div className="w-64 h-screen border-solid border-[1px] border-r dark:border-gray-600 rtl:border-r-0 rtl:border-l bg-background text-foreground">
       <div className="p-4 flex flex-col h-full">
         <h1 className="text-xl font-bold mb-8">{dir === "rtl" ? "پوشه ها" : "Folders"}</h1>
         <nav className="space-y-2 flex-1 overflow-auto">{renderFolderTree(folderTree)}</nav>

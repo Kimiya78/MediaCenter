@@ -93,9 +93,15 @@ export function PasswordDialog({ isOpen, onClose, FileID, AttachmentUrlGuid, fil
       const videoTypes = ["mp4", "webm", "ogg", "avi", "mkv", "quicktime", "video/mp4"];
       const isVideo = videoTypes.some((type) => contentType.includes(type));
 
-      const downloadFilename = contentDisposition
+      let downloadFilename = contentDisposition
         ? contentDisposition.split("filename=")[1]?.replace(/"/g, "")
         : fileName;
+
+      // Add extension if missing
+      if (!downloadFilename.includes('.')) {
+        const extension = getFileTypeFromMimeType(contentType);
+        downloadFilename = `${downloadFilename}.${extension}`;
+      }
 
       if (isVideo) {
         const videoContainer = document.getElementById("videoContainer");
@@ -129,7 +135,7 @@ export function PasswordDialog({ isOpen, onClose, FileID, AttachmentUrlGuid, fil
       }
 
       onClose();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Download error:", error);
       if (error.response?.status === 403) {
         setError("رمز عبور نادرست است");

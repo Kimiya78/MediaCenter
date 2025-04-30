@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import type { FileItem, SortConfig } from "@/types/file"
+import type { FileItem, SortConfig, APIFileItem, APIResponse, FilePermission } from "@/types/file"
 import { FileCard } from "./file-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { LayoutGrid, List, Search, Upload, MoreVertical, FileText, Presentation, Table, ChevronDown, Video, Image as ImageIcon, File as FileIcon } from "lucide-react"
+import { LayoutGrid, List, Search, Upload, MoreVertical, FileText, Presentation, Table, ChevronDown, Video, ImageIcon, FileIcon } from "lucide-react"
 import { UploadDialog } from "../upload-dialog"
 //import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ShareMenu } from "../share-menu"
@@ -41,19 +41,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toJalali, toJalaliWithTime } from "@/utils/dateConverter";
 import moment from "moment";
 import convertToJalali from "@/hooks/useJalaliDate"
-
-
-
-
+import { determineFileType } from "@/utils/file-utils";
+import axios, { AxiosResponse } from "axios";
 
 interface FileListProps {
   initialFiles: FileItem[]
   selectedFolderId: string
-  setSelectedFolderId: (id: number | null) => void; // Ensure it's passed
-
+  setSelectedFolderId: (id: string | null) => void;
 }
 
-export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  }: FileListProps) {
+export function FileList({ initialFiles, selectedFolderId, setSelectedFolderId }: FileListProps) {
   const { dir } = useDirection();
   const [view, setView] = useState<"grid" | "list">("grid");
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -95,12 +92,10 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
   // NexxFetch API Call
   const navigationItemsUrl = `${ConfigURL.baseUrl}/fetch_media?page_number=${currentPage}&page_size=${pageSize}&EntityGUID=0xBD4A81E6A803&EntityDataGUID=0x85AC4B90382C&FolderID=${selectedFolderId}&keyword_search=${encodeURIComponent(keyword_search)}`;
   
-  const { data, isLoading, error: fetchError , refetch} =  NexxFetch.useGetData<{
-    page_number: number;
-    total_records: number;
-    page_size: number;
-    items: FileItem[];
-  }>(navigationItemsUrl, [currentPage, pageSize, selectedFolderId , searchQuery]); //`${navigationItemsUrl}?keyword_search=${keyword_search ?? ""}&FolderID=${selectedFolderId ?? ""}`,
+  const { data, isLoading, error: fetchError, refetch } = NexxFetch.useGetData<APIResponse>(
+    navigationItemsUrl,
+    [currentPage, pageSize, selectedFolderId, searchQuery]
+  );
 
   const formatFileSize = (sizeInBytes: number): string => {
     const sizeInMB = sizeInBytes / (1024 * 1024);
@@ -125,6 +120,7 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
             description: item.Description,
             permission: item.allowDeleteFile === "true" ? "owner" : "viewer",
             isLocked: false,
+            isNew: false
           };
         }
 
@@ -142,6 +138,7 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
           description: item.Description,
           permission: item.allowDeleteFile === "true" ? "owner" : "viewer",
           isLocked: false,
+          isNew: false
         };
       });
 
@@ -209,6 +206,11 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
 
   // Sorting logic
   const sortedFiles = [...filteredFiles].sort((a, b) => {
+    // Always show new files first
+    if (a.isNew && !b.isNew) return -1;
+    if (!a.isNew && b.isNew) return 1;
+    
+    // Then apply normal sorting
     const aValue = a[sortConfig.key];
     const bValue = b[sortConfig.key];
 
@@ -238,8 +240,17 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
       const parseSize = (sizeStr: string): number => {
         const [value, unit] = sizeStr.trim().split(/\s+/);
         const numValue = parseFloat(value);
-        if (unit === "MB") return numValue * 1024; // Convert MB to KB for comparison
-        return numValue; // Already in KB
+        
+        if (isNaN(numValue)) return 0;
+        
+        switch (unit.toLowerCase()) {
+          case 'mb':
+            return numValue * 1024 * 1024;
+          case 'kb':
+            return numValue * 1024;
+          default:
+            return numValue;
+        }
       };
 
       const aSize = parseSize(aValue);
@@ -279,10 +290,10 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
     }
   }, [totalPages]);
 
-  const handleSort = (key: keyof FileItem) => {
-    setSortConfig((current) => ({
+  const handleSort = (key: keyof Pick<FileItem, 'name' | 'type' | 'size' | 'createdDate'>) => {
+    setSortConfig((prevConfig) => ({
       key,
-      direction: current.key === key && current.direction === "asc" ? "desc" : "asc",
+      direction: prevConfig.key === key && prevConfig.direction === "asc" ? "desc" : "asc",
     }));
   };
 
@@ -294,70 +305,97 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
     }
   };
 
-  const MIME_TYPE_TO_EXT = {
-    "image/png": "png",
-    "image/jpeg": "jpg",
-    "application/pdf": "pdf",
-    "video/mp4": "mp4",
-    "text/plain": "txt",
-    // Add more mappings as needed
-  };
-  
-  // Helper function to map MIME types to extensions
-  const getExtensionFromMimeType = (mimeType) => {
-    return MIME_TYPE_TO_EXT[mimeType];
+  const getExtensionFromMimeType = (mimeType: string): string => {
+    const mimeToExt: { [key: string]: string } = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'application/pdf': 'pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+      'text/plain': 'txt',
+      'video/mp4': 'mp4',
+      'video/quicktime': 'mov',
+      'video/x-msvideo': 'avi'
+    };
+    return mimeToExt[mimeType] || '';
   };
   
 
   // Upload logic with animation
-  const addNewFile = (file: File, description: string, mimeType: string) => {
-    console.log("direction now is this value : ", dir);
-  
-    // Determine file extension
-    // const fileExtensionFromName = file.name.split(".").pop()?.toLowerCase();
-    // const fileExtension = fileExtensionFromName || getExtensionFromMimeType(mimeType) || "unknown"0;
-      // گرفتن اکستنشن از نام فایل
-  const fileExtensionFromName = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : '';
-  // اگر type خالی بود، از mimeType یا unknown استفاده کن
-  const fileExtension = fileExtensionFromName || (file.type ? file.type.split('/').pop() : '') || "unknown";
-  
-    console.log("🟡   برای اسم فایل اکستنشن :" , fileExtensionFromName, 'فایل اکستنشن ' ,  fileExtension);
-    console.log("🟡  نام فایل  :", file.name);
-    console.log("🟡  تایپ فایل  :", file.type);
-  
+  const addNewFile = (file: File, description: string, mimeType: string): void => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("description", description);
+    formData.append("FolderID", selectedFolderId);
+    formData.append("EntityGUID", "0xBD4A81E6A803");
+    formData.append("EntityDataGUID", "0x85AC4B90382C");
+
+    console.log("🟡 Adding new file:", {
+      name: file.name,
+      type: file.type,
+      mimeType: mimeType,
+      size: file.size
+    });
+
+    // Map MIME types to extensions
+    const extensionMap: Record<string, string> = {
+      'image/png': 'png',
+      'image/jpeg': 'jpg',
+      'application/pdf': 'pdf',
+      'video/mp4': 'mp4',
+      'text/plain': 'txt',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+      'application/zip': 'zip'
+    };
+
+    // Get the extension from the MIME type map or use a default
+    const extension = extensionMap[mimeType] || 'unknown';
+    
+    // Ensure filename has correct extension
+    let fileName = file.name;
+    if (!fileName.includes('.') || !fileName.toLowerCase().endsWith(`.${extension}`)) {
+      fileName = `${fileName.split('.')[0]}.${extension}`;
+    }
+
     const today = new Date();
     let createdDate;
     if (dir === "rtl") {
-      // تبدیل تاریخ به شمسی با فرمت مشابه سایر فایل‌ها
       const miladi = moment(today).format("YYYY/MM/DD - HH:mm");
       createdDate = convertToJalali(miladi).replace(/(\d{4}\/\d{2}\/\d{2}) - (\d{2}:\d{2})/, "$2 - $1");
     } else {
       createdDate = moment(today).format("YYYY/MM/DD - HH:mm");
     }
-    console.log( '🟢🟢File Name :🟢🟢' , file.name , fileType )
+
     const newFile: FileItem = {
       id: Date.now().toString(),
-      name: file.name,
-      type: fileExtension,
+      correlationGuid: '',
+      name: fileName,
+      type: extension,
       size: formatFileSize(file.size),
       createdBy: "You",
       createdDate: createdDate,
       description: description,
       permission: "owner",
       isLocked: false,
+      isNew: true
     };
-    debugger
-  
-    // Add the new file at the beginning of the list with animation
-    setFiles((prevFiles) => {
-      const updatedFiles = [newFile, ...prevFiles];
-      return updatedFiles;
-    });
+
+    setFiles((prevFiles) => [newFile, ...prevFiles]);
     setNewFileId(newFile.id);
   
     // Remove animation after 2 seconds
     setTimeout(() => {
       setNewFileId(null);
+      setFiles((prevFiles) => 
+        prevFiles.map(file => 
+          file.id === newFile.id 
+            ? { ...file, isNew: false }
+            : file
+        )
+      );
     }, 2000);
   };
 
@@ -372,17 +410,27 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
       const fileIndex = prevFiles.findIndex(file => file.id === fileId);
       if (fileIndex === -1) return prevFiles;
       
-      const updatedFiles = [...prevFiles];
-      updatedFiles[fileIndex] = { ...updatedFiles[fileIndex], name: newName.trim() };
-      return updatedFiles;
+      const updatedFile = { 
+        ...prevFiles[fileIndex], 
+        name: newName.trim(),
+        isNew: true
+      };
+      
+      const otherFiles = prevFiles.filter(file => file.id !== fileId);
+      return [updatedFile, ...otherFiles];
     });
 
-    // Apply animation to renamed file
-    setNewFileId(newName);
+    setNewFileId(fileId);
 
-    // Remove animation after 2 seconds
     setTimeout(() => {
       setNewFileId(null);
+      setFiles((prevFiles) =>
+        prevFiles.map(file =>
+          file.id === fileId
+            ? { ...file, isNew: false }
+            : file
+        )
+      );
     }, 2000);
   };
   
@@ -426,7 +474,7 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
           <th
             key={key}
             className={`px-4 py-3 cursor-pointer hover:bg-muted/50 ${dir === "rtl" ? "text-right" : "text-left"}`}
-            onClick={() => handleSort(key as keyof FileItem)}
+            onClick={() => handleSort(key as keyof Pick<FileItem, 'name' | 'type' | 'size' | 'createdDate'>)}
           >
             <div className="flex items-center gap-2">
               {label}
@@ -563,21 +611,38 @@ export function FileList({ initialFiles, selectedFolderId ,setSelectedFolderId  
     }
   };
 
-  const getFileIcon = (fileType: string) => {
-    switch (fileType) {
+  type FileExtension = 'png' | 'jpg' | 'jpeg' | 'mp4' | 'mov' | 'avi' | 'pptx' | 'pdf' | 'docx' | 'xlsx' | 'txt';
+
+  const getFileIcon = (fileType: FileExtension | string) => {
+    switch (fileType.toLowerCase()) {
       case 'png':
       case 'jpg':
       case 'jpeg':
-        return <ImageIcon />;
-      case 'pdf':
-        return <FileIcon />;
+        return <ImageIcon className="h-4 w-4" />;
       case 'mp4':
       case 'mov':
       case 'avi':
-        return <Video />;
-      // سایر انواع فایل
+        return <Video className="h-4 w-4" />;
+      case 'pptx':
+        return <Presentation className="h-4 w-4" />;
+      case 'pdf':
+      case 'docx':
+      case 'txt':
+        return <FileText className="h-4 w-4" />;
       default:
-        return <FileIcon />; // آیکون پیش‌فرض
+        return <FileIcon className="h-4 w-4" />;
+    }
+  };
+
+  const handleFetchData = async () => {
+    try {
+      const response = await axios.get<APIResponse>(navigationItemsUrl);
+      setFiles(response.data.items);
+      setTotalRecords(response.data.total_records);
+      setPageSize(response.data.page_size);
+    } catch (error) {
+      console.error("Error fetching files:", error);
+      setError("Failed to fetch files");
     }
   };
 
